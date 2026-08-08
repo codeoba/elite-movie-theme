@@ -1,7 +1,7 @@
 <?php
 /**
- * MovieElite Pro - Embed Source Domain Manager
- * Provides custom admin controls to view, add, edit, or update embed player domain patterns.
+ * MovieElite Pro - Embed Source Domain Manager with Priority Reordering
+ * Provides custom admin controls to view, add, edit, delete, and REORDER embed player sources.
  */
 
 if (!defined('ABSPATH')) {
@@ -9,9 +9,9 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Get default embed servers list
+ * Get default embed servers list, sorted by priority order
  *
- * @return array Embed servers configuration
+ * @return array Embed servers configuration sorted by order
  */
 function movie_elite_get_embed_servers() {
     $custom_servers = get_option('movie_elite_embed_servers', array());
@@ -23,46 +23,59 @@ function movie_elite_get_embed_servers() {
                 'name'     => 'Server 1 (VidSrc Pro)',
                 'pattern'  => 'https://vidsrc.to/embed/movie/{imdb_id}',
                 'type'     => 'imdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 1
             ),
             'server_2' => array(
                 'id'       => 'server_2',
                 'name'     => 'Server 2 (SuperEmbed Stream)',
                 'pattern'  => 'https://www.superembed.stream/directstream.php?video_id={imdb_id}',
                 'type'     => 'imdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 2
             ),
             'server_3' => array(
                 'id'       => 'server_3',
                 'name'     => 'Server 3 (AutoEmbed Net)',
                 'pattern'  => 'https://autoembed.net/embed/movie/{tmdb_id}',
                 'type'     => 'tmdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 3
             ),
             'server_4' => array(
                 'id'       => 'server_4',
                 'name'     => 'Server 4 (VidSrc SBS)',
                 'pattern'  => 'https://vidsrc.sbs/embed/movie/{tmdb_id}',
                 'type'     => 'tmdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 4
             ),
             'server_5' => array(
                 'id'       => 'server_5',
                 'name'     => 'Server 5 (2Embed Mirror)',
                 'pattern'  => 'https://www.2embed.cc/embed/{imdb_id}',
                 'type'     => 'imdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 5
             ),
             'server_6' => array(
                 'id'       => 'server_6',
                 'name'     => 'Server 6 (MovieAPI Fast)',
                 'pattern'  => 'https://vidsrc.me/embed/movie?imdb={imdb_id}',
                 'type'     => 'imdb',
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => 6
             )
         );
         update_option('movie_elite_embed_servers', $custom_servers);
     }
+
+    // Sort servers by order priority ascending
+    uasort($custom_servers, function($a, $b) {
+        $order_a = intval($a['order'] ?? 99);
+        $order_b = intval($b['order'] ?? 99);
+        return $order_a <=> $order_b;
+    });
 
     return $custom_servers;
 }
@@ -83,7 +96,7 @@ function movie_elite_embed_manager_menu() {
 add_action('admin_menu', 'movie_elite_embed_manager_menu');
 
 /**
- * Render Embed Source Manager Page
+ * Render Embed Source Manager Page with Order Controls
  */
 function movie_elite_embed_manager_page_render() {
     if (isset($_POST['movie_elite_save_embeds']) && check_admin_referer('movie_elite_embed_nonce')) {
@@ -96,6 +109,7 @@ function movie_elite_embed_manager_page_render() {
                     $servers[$id]['pattern'] = esc_url_raw($data['pattern']);
                     $servers[$id]['type']    = sanitize_text_field($data['type']);
                     $servers[$id]['status']  = sanitize_text_field($data['status']);
+                    $servers[$id]['order']   = intval($data['order'] ?? 1);
                 }
             }
         }
@@ -108,12 +122,30 @@ function movie_elite_embed_manager_page_render() {
                 'name'     => sanitize_text_field($_POST['new_server_name']),
                 'pattern'  => esc_url_raw($_POST['new_server_pattern']),
                 'type'     => sanitize_text_field($_POST['new_server_type'] ?? 'imdb'),
-                'status'   => 'active'
+                'status'   => 'active',
+                'order'    => intval($_POST['new_server_order'] ?? (count($servers) + 1))
             );
         }
 
         update_option('movie_elite_embed_servers', $servers);
-        echo '<div class="updated"><p>Embed player server domains updated successfully!</p></div>';
+        echo '<div class="updated"><p>Embed player server order & domain settings saved successfully!</p></div>';
+    }
+
+    // Move Up / Down actions
+    if (isset($_GET['action']) && in_array($_GET['action'], ['move_up', 'move_down']) && isset($_GET['server_id'])) {
+        $servers = movie_elite_get_embed_servers();
+        $target_id = $_GET['server_id'];
+        
+        if (isset($servers[$target_id])) {
+            $current_order = intval($servers[$target_id]['order'] ?? 1);
+            if ($_GET['action'] === 'move_up' && $current_order > 1) {
+                $servers[$target_id]['order'] = $current_order - 1;
+            } elseif ($_GET['action'] === 'move_down') {
+                $servers[$target_id]['order'] = $current_order + 1;
+            }
+            update_option('movie_elite_embed_servers', $servers);
+            echo '<div class="updated"><p>Server priority updated!</p></div>';
+        }
     }
 
     // Delete action
@@ -128,10 +160,10 @@ function movie_elite_embed_manager_page_render() {
     ?>
     <div class="wrap">
         <h1 style="display:flex; align-items:center; gap:10px;">
-            <span class="dashicons dashicons-video-alt3" style="font-size:32px; color:#00f2fe;"></span>
-            Movie Player Embed Source Manager
+            <span class="dashicons dashicons-sort" style="font-size:32px; color:#00f2fe;"></span>
+            Movie Player Embed Source & Priority Reordering Manager
         </h1>
-        <p>Manage, edit, add, or update embed player domain patterns for all movies. (Updated with official <strong>https://vidsrc.sbs/embed/movie/{tmdb_id}</strong> server).</p>
+        <p>Manage, edit, add, and <strong>RE-ORDER server priority</strong>. The order set here (1, 2, 3...) determines which server is loaded 1st, 2nd, 3rd, etc. on all movie pages!</p>
         <hr />
 
         <form method="post" action="">
@@ -139,16 +171,25 @@ function movie_elite_embed_manager_page_render() {
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
+                        <th style="width:70px;">Priority</th>
                         <th style="width:180px;">Server Name</th>
                         <th>URL Pattern (Use {imdb_id} or {tmdb_id})</th>
-                        <th style="width:120px;">ID Type</th>
-                        <th style="width:120px;">Status</th>
-                        <th style="width:100px;">Actions</th>
+                        <th style="width:100px;">ID Type</th>
+                        <th style="width:100px;">Status</th>
+                        <th style="width:120px;">Re-order</th>
+                        <th style="width:90px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($servers as $id => $srv) : ?>
+                    <?php 
+                    $pos = 0;
+                    foreach ($servers as $id => $srv) : 
+                        $pos++;
+                    ?>
                     <tr>
+                        <td>
+                            <input type="number" name="servers[<?php echo esc_attr($id); ?>][order]" value="<?php echo intval($srv['order'] ?? $pos); ?>" style="width:55px; font-weight:bold; text-align:center;" min="1" />
+                        </td>
                         <td>
                             <input type="text" name="servers[<?php echo esc_attr($id); ?>][name]" value="<?php echo esc_attr($srv['name']); ?>" class="widefat" />
                         </td>
@@ -168,29 +209,41 @@ function movie_elite_embed_manager_page_render() {
                             </select>
                         </td>
                         <td>
-                            <a href="<?php echo esc_url(wp_nonce_url(admin_url('edit.php?post_type=movies&page=movie-elite-embed-manager&action=delete&server_id=' . $id), 'delete_server_' . $id)); ?>" class="button button-link-delete" onclick="return confirm('Are you sure you want to delete this server?');">Delete</a>
+                            <a href="<?php echo esc_url(admin_url('edit.php?post_type=movies&page=movie-elite-embed-manager&action=move_up&server_id=' . $id)); ?>" class="button button-small">⬆️ Up</a>
+                            <a href="<?php echo esc_url(admin_url('edit.php?post_type=movies&page=movie-elite-embed-manager&action=move_down&server_id=' . $id)); ?>" class="button button-small">⬇️ Down</a>
+                        </td>
+                        <td>
+                            <a href="<?php echo esc_url(wp_nonce_url(admin_url('edit.php?post_type=movies&page=movie-elite-embed-manager&action=delete&server_id=' . $id), 'delete_server_' . $id)); ?>" class="button button-link-delete" onclick="return confirm('Delete this server?');">Delete</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
 
+            <p style="margin-top:20px;">
+                <input type="submit" name="movie_elite_save_embeds" class="button button-primary button-large" value="💾 Save Priority Order & Embed Settings" />
+            </p>
+
             <h2 style="margin-top:30px;">Add New Embed Server Provider</h2>
             <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ccd0d4; max-width:700px;">
                 <p>
                     <label><strong>Server Name:</strong></label><br />
-                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 7 (VidSrc SBS Mirror)" />
+                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 7 (New Fast Provider)" />
                 </p>
                 <p>
                     <label><strong>URL Pattern:</strong></label><br />
-                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://vidsrc.sbs/embed/movie/{tmdb_id}" />
+                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://domain.com/embed/{imdb_id}" />
                     <span class="description">Must include <code>{imdb_id}</code> or <code>{tmdb_id}</code> placeholder.</span>
+                </p>
+                <p>
+                    <label><strong>Priority Position Order:</strong></label><br />
+                    <input type="number" name="new_server_order" value="<?php echo count($servers) + 1; ?>" style="width:80px;" min="1" />
                 </p>
                 <p>
                     <label><strong>ID Type:</strong></label><br />
                     <select name="new_server_type">
-                        <option value="tmdb">TMDb ID (12345)</option>
                         <option value="imdb">IMDb ID (tt1234567)</option>
+                        <option value="tmdb">TMDb ID (12345)</option>
                     </select>
                 </p>
             </div>
