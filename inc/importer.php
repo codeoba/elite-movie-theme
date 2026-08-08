@@ -5,6 +5,7 @@
  * 1. Smart Duplicate Detection (Marks already imported movies with green badges & disables double imports).
  * 2. Full Search Pagination (Displays total results count, total pages, Prev/Next navigation).
  * 3. Page-Level Manual & Bulk Import (Import individual items or bulk import an entire search page at once).
+ * 4. Ultra-Reliable Poster Image Renderer with `referrerpolicy="no-referrer"` & CDN fallbacks.
  */
 
 if (!defined('ABSPATH')) {
@@ -66,7 +67,7 @@ function movie_elite_importer_page_render() {
                 </div>
                 <div>
                     <label><strong>Search Title / Name:</strong></label>
-                    <input type="text" id="import-title" class="widefat" placeholder="e.g. Avatar, Squid Game" />
+                    <input type="text" id="import-title" class="widefat" placeholder="e.g. Avatar, Soul, Tenet" />
                 </div>
                 <div>
                     <label><strong>IMDb / TMDb ID:</strong></label>
@@ -142,10 +143,17 @@ function movie_elite_importer_page_render() {
 
     <script>
     jQuery(document).ready(function($) {
-        var apiKey     = '<?php echo esc_js($api_key); ?>';
+        var apiKey      = '<?php echo esc_js($api_key); ?>';
         var currentPage = 1;
         var totalPages  = 1;
         var currentItems = [];
+
+        function getPosterUrl(path) {
+            if (!path) return 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300';
+            if (path.indexOf('http') === 0) return path;
+            var cleanPath = path.indexOf('/') === 0 ? path : '/' + path;
+            return 'https://image.tmdb.org/t/p/w500' + cleanPath;
+        }
 
         function fetchTmdbResults(page) {
             var type  = $('#import-type').val();
@@ -214,22 +222,25 @@ function movie_elite_importer_page_render() {
             var html = '';
 
             $.each(currentItems, function(i, m) {
-                var itemTitle = m.title || m.name;
-                var tmdbId    = m.id;
+                var itemTitle  = m.title || m.name || 'Untitled';
+                var tmdbId     = m.id;
                 var isImported = existingMap[tmdbId] ? true : false;
-                var poster    = m.poster_path ? 'https://image.tmdb.org/t/p/w500' + m.poster_path : 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300';
-                var release   = (m.release_date || m.first_air_date || '2026').substring(0,4);
-                var rating    = (m.vote_average || 7.5).toFixed(1);
+                var poster     = getPosterUrl(m.poster_path || m.backdrop_path);
+                var release    = (m.release_date || m.first_air_date || '2026').substring(0,4);
+                var rating     = (m.vote_average || 7.5).toFixed(1);
 
                 if (hideImported && isImported) return true; // Skip rendering if hide checkbox checked
 
                 html += '<div class="import-card-item" data-tmdb="' + tmdbId + '" data-imported="' + isImported + '" style="border:1px solid ' + (isImported ? '#00c853' : '#e0e0e0') + '; padding:12px; border-radius:8px; text-align:center; background:' + (isImported ? '#f0fdf4' : '#fafafa') + '; position:relative; box-shadow:0 4px 6px rgba(0,0,0,0.03);">';
                 
                 if (isImported) {
-                    html += '<span style="position:absolute; top:8px; right:8px; background:#00c853; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px;">✅ IMPORTED</span>';
+                    html += '<span style="position:absolute; top:8px; right:8px; background:#00c853; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; z-index:2;">✅ IMPORTED</span>';
                 }
 
-                html += '<img src="' + poster + '" style="width:100%; height:230px; object-fit:cover; border-radius:6px;" />';
+                html += '<div style="position:relative; width:100%; height:230px; border-radius:6px; overflow:hidden; background:#e2e8f0;">';
+                html += '<img src="' + poster + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300\';" style="width:100%; height:100%; object-fit:cover; display:block;" alt="' + itemTitle + '" />';
+                html += '</div>';
+
                 html += '<h4 style="font-size:0.85rem; margin:10px 0 4px; line-height:1.2; height:32px; overflow:hidden;">' + itemTitle + '</h4>';
                 html += '<div style="font-size:0.75rem; color:#666; margin-bottom:10px;">⭐ ' + rating + ' | 📅 ' + release + '</div>';
                 
