@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (With Dynamic TMDb/IMDb ID Sanitizer & Player Fix)
+ * MovieElite Pro - Single Movie Detail View (With Direct VidVault Download Buttons)
  */
 
 get_header();
@@ -45,10 +45,14 @@ while (have_posts()) : the_post();
         $vv_links = movie_elite_get_vidvault_links($clean_tmdb ?: $clean_imdb, 'movie');
     }
 
-    $dl_720p   = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? '');
-    $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? '');
-    $dl_4k     = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? '');
-    $dl_direct = $vv_links['direct_page'] ?? "https://vidvault.ru/movie/{$clean_tmdb}";
+    $vidvault_direct_url = "https://vidvault.ru/movie/{$clean_tmdb}";
+
+    $dl_720p   = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? $vidvault_direct_url);
+    $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? $vidvault_direct_url);
+    $dl_4k     = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? $vidvault_direct_url);
+    
+    // Primary Download Link for feature bar button
+    $primary_download_url = !empty($dl_1080p) ? $dl_1080p : $vidvault_direct_url;
 
     if (empty($poster)) {
         $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80';
@@ -143,7 +147,8 @@ while (have_posts()) : the_post();
                         <i class="fa-solid fa-expand"></i> Theater Mode
                     </button>
 
-                    <a href="#download-section-box" class="alphabet-btn" style="background:rgba(0,255,136,0.15); color:var(--accent-green); border:1px solid var(--accent-green); text-decoration:none;">
+                    <!-- Direct VidVault Download Link Button in Player Sub-Bar -->
+                    <a href="<?php echo esc_url($primary_download_url); ?>" target="_blank" rel="noopener" class="alphabet-btn" style="background:rgba(0,255,136,0.15); color:var(--accent-green); border:1px solid var(--accent-green); text-decoration:none;">
                         <i class="fa-solid fa-download"></i> Download Movie
                     </a>
 
@@ -157,22 +162,19 @@ while (have_posts()) : the_post();
         <!-- VidVault Download Links Section Card -->
         <div id="download-section-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:25px; margin-bottom:40px; box-shadow:0 15px 30px rgba(0,0,0,0.5);">
             <h3 style="color:#fff; font-size:1.3rem; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Download Movie (Powered by VidVault Engine)
+                <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Download Movie (VidVault Direct HD Links)
             </h3>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Fast HD downloads verified for <?php echo esc_html($title); ?>:</p>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Click any quality option below to download <?php echo esc_html($title); ?> directly:</p>
             
             <div style="display:flex; flex-wrap:wrap; gap:15px;">
                 <a href="<?php echo esc_url($dl_720p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00b4d8, #0077b6); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 720p HD (VidVault)
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 720p HD
                 </a>
                 <a href="<?php echo esc_url($dl_1080p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00f2fe, #4facfe); color:#000;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 1080p Full HD (VidVault)
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 1080p Full HD
                 </a>
                 <a href="<?php echo esc_url($dl_4k); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #ff0055, #ff5252); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 4K Ultra HD (VidVault)
-                </a>
-                <a href="<?php echo esc_url($dl_direct); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2);">
-                    <i class="fa-solid fa-external-link"></i> VidVault Portal Direct Page
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 4K Ultra HD
                 </a>
             </div>
         </div>
