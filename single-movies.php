@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (With Verified VSEmbed.ru & VidSrc.sbs Players)
+ * MovieElite Pro - Single Movie Detail View (With Clean TMDb & IMDb Server Embed Resolution)
  */
 
 get_header();
@@ -8,8 +8,12 @@ get_header();
 while (have_posts()) : the_post();
     $post_id   = get_the_ID();
     $title     = get_the_title();
-    $imdb_id   = get_post_meta($post_id, 'imdb_id', true) ?: 'tt1630029';
-    $tmdb_id   = get_post_meta($post_id, 'tmdb_id', true) ?: '76600';
+    $raw_imdb  = get_post_meta($post_id, 'imdb_id', true) ?: 'tt1630029';
+    $raw_tmdb  = get_post_meta($post_id, 'tmdb_id', true) ?: '76600';
+
+    $imdb_id   = trim($raw_imdb);
+    $tmdb_id   = trim(preg_replace('/[^0-9]/', '', $raw_tmdb));
+
     $rating    = get_post_meta($post_id, 'imdb_rating', true) ?: '8.5';
     $year      = get_post_meta($post_id, 'release_year', true) ?: '2026';
     $quality   = get_post_meta($post_id, 'movie_quality', true) ?: '4K UHD';
@@ -33,16 +37,14 @@ while (have_posts()) : the_post();
 
     // Get Multi-Source Embed Servers
     $embeds = get_post_meta($post_id, 'movie_embed_sources', true);
-    if (empty($embeds) && function_exists('movie_elite_generate_movie_embeds')) {
-        $embeds = movie_elite_generate_movie_embeds($imdb_id, $tmdb_id);
+    if (empty($embeds) || !is_array($embeds)) {
+        if (function_exists('movie_elite_generate_movie_embeds')) {
+            $embeds = movie_elite_generate_movie_embeds($imdb_id, $tmdb_id);
+        }
     }
 
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Cinema', 'Action');
-
-    // Build verified fallback URLs for VidSrc SBS & VSEmbed
-    $vidsrc_sbs_url = !empty($tmdb_id) ? "https://vidsrc.sbs/embed/movie/{$tmdb_id}" : "https://vidsrc.sbs/embed/movie/{$imdb_id}";
-    $vsembed_url    = !empty($tmdb_id) ? "https://vsembed.ru/embed/movie/{$tmdb_id}" : "https://vsembed.ru/embed/movie/{$imdb_id}";
 ?>
 
 <!-- Lights Off Overlay -->
@@ -79,27 +81,31 @@ while (have_posts()) : the_post();
                     endforeach;
                 else :
                 ?>
-                <button type="button" class="server-tab active" data-url="https://vidsrc.to/embed/movie/<?php echo esc_attr($imdb_id); ?>">
-                    <i class="fa-solid fa-play"></i> Server 1 (VidSrc Pro)
+                <?php if (!empty($tmdb_id)) : ?>
+                <button type="button" class="server-tab active" data-url="https://vidsrc.sbs/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
+                    <i class="fa-solid fa-play"></i> Server 1 (VidSrc SBS)
                 </button>
-                <button type="button" class="server-tab" data-url="https://www.superembed.stream/directstream.php?video_id=<?php echo esc_attr($imdb_id); ?>">
-                    <i class="fa-solid fa-play"></i> Server 2 (SuperEmbed Stream)
+                <button type="button" class="server-tab" data-url="https://vsembed.ru/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
+                    <i class="fa-solid fa-play"></i> Server 2 (VSEmbed Stream)
                 </button>
                 <button type="button" class="server-tab" data-url="https://autoembed.net/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
                     <i class="fa-solid fa-play"></i> Server 3 (AutoEmbed Net)
                 </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($vidsrc_sbs_url); ?>">
-                    <i class="fa-solid fa-play"></i> Server 4 (VidSrc SBS)
+                <?php endif; ?>
+                <?php if (!empty($imdb_id)) : ?>
+                <button type="button" class="server-tab" data-url="https://vidsrc.to/embed/movie/<?php echo esc_attr($imdb_id); ?>">
+                    <i class="fa-solid fa-play"></i> Server 4 (VidSrc Pro)
                 </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($vsembed_url); ?>">
-                    <i class="fa-solid fa-play"></i> Server 5 (VSEmbed Stream)
+                <button type="button" class="server-tab" data-url="https://www.superembed.stream/directstream.php?video_id=<?php echo esc_attr($imdb_id); ?>">
+                    <i class="fa-solid fa-play"></i> Server 5 (SuperEmbed Stream)
                 </button>
+                <?php endif; ?>
                 <?php endif; ?>
             </div>
 
             <!-- Embed Player Frame with referrer & autoplay attributes -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.to/embed/movie/{$imdb_id}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/movie/{$tmdb_id}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
