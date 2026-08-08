@@ -35,32 +35,27 @@ function movie_elite_setup() {
 add_action('after_setup_theme', 'movie_elite_setup');
 
 /**
- * Register Custom Post Type: Movies (`movies`)
+ * Register Separate Custom Post Types: `movies` & `tvshows`
  */
-function movie_elite_register_cpt() {
-    $labels = array(
-        'name'               => 'Movies & Series',
-        'singular_name'      => 'Movie',
-        'menu_name'          => 'Movies & Series',
-        'add_new'            => 'Add New Movie / TV Show',
-        'add_new_item'       => 'Add New Movie / TV Show',
-        'edit_item'          => 'Edit Movie / TV Show',
-        'new_item'           => 'New Movie',
-        'view_item'          => 'View Movie',
-        'search_items'       => 'Search Movies',
-        'not_found'          => 'No movies found',
-        'not_found_in_trash' => 'No movies found in Trash',
-    );
-
+function movie_elite_register_cpts() {
+    // 1. CPT: Movies (`movies`)
     register_post_type('movies', array(
-        'labels'              => $labels,
+        'labels'              => array(
+            'name'               => 'Movies',
+            'singular_name'      => 'Movie',
+            'menu_name'          => '🍿 Movies',
+            'add_new'            => 'Add New Movie',
+            'add_new_item'       => 'Add New Movie',
+            'edit_item'          => 'Edit Movie',
+            'search_items'       => 'Search Movies',
+        ),
         'public'              => true,
         'has_archive'         => true,
         'publicly_queryable'  => true,
         'show_ui'             => true,
         'show_in_menu'        => true,
         'query_var'           => true,
-        'rewrite'             => array('slug' => 'movie'),
+        'rewrite'             => array('slug' => 'movies'),
         'capability_type'     => 'post',
         'hierarchical'        => false,
         'menu_position'       => 5,
@@ -68,17 +63,41 @@ function movie_elite_register_cpt() {
         'supports'            => array('title', 'editor', 'thumbnail', 'excerpt'),
     ));
 
-    // Register Category Taxonomy
-    register_taxonomy('movie_category', array('movies'), array(
+    // 2. CPT: TV Shows & Asian Dramas (`tvshows`)
+    register_post_type('tvshows', array(
+        'labels'              => array(
+            'name'               => 'TV Shows & Dramas',
+            'singular_name'      => 'TV Show / Drama',
+            'menu_name'          => '📺 TV Shows & Dramas',
+            'add_new'            => 'Add New TV Show / Drama',
+            'add_new_item'       => 'Add New TV Show / Drama',
+            'edit_item'          => 'Edit TV Show',
+            'search_items'       => 'Search TV Shows',
+        ),
+        'public'              => true,
+        'has_archive'         => true,
+        'publicly_queryable'  => true,
+        'show_ui'             => true,
+        'show_in_menu'        => true,
+        'query_var'           => true,
+        'rewrite'             => array('slug' => 'tvshows'),
+        'capability_type'     => 'post',
+        'hierarchical'        => false,
+        'menu_position'       => 6,
+        'menu_icon'           => 'dashicons-video-alt2',
+        'supports'            => array('title', 'editor', 'thumbnail', 'excerpt'),
+    ));
+
+    // Register Shared Taxonomies across both Movies and TV Shows
+    register_taxonomy('movie_category', array('movies', 'tvshows'), array(
         'hierarchical'      => true,
-        'labels'            => array('name' => 'Movie Categories', 'singular_name' => 'Movie Category'),
+        'labels'            => array('name' => 'Categories', 'singular_name' => 'Category'),
         'show_ui'           => true,
         'show_admin_column' => true,
         'rewrite'           => array('slug' => 'category'),
     ));
 
-    // Register Genre Taxonomy
-    register_taxonomy('genre', array('movies'), array(
+    register_taxonomy('genre', array('movies', 'tvshows'), array(
         'hierarchical'      => true,
         'labels'            => array('name' => 'Genres', 'singular_name' => 'Genre'),
         'show_ui'           => true,
@@ -86,8 +105,7 @@ function movie_elite_register_cpt() {
         'rewrite'           => array('slug' => 'genre'),
     ));
 
-    // Register Country Taxonomy
-    register_taxonomy('country', array('movies'), array(
+    register_taxonomy('country', array('movies', 'tvshows'), array(
         'hierarchical'      => true,
         'labels'            => array('name' => 'Countries', 'singular_name' => 'Country'),
         'show_ui'           => true,
@@ -112,7 +130,7 @@ function movie_elite_register_cpt() {
         }
     }
 }
-add_action('init', 'movie_elite_register_cpt');
+add_action('init', 'movie_elite_register_cpts');
 
 /**
  * Enqueue Scripts & Styles
@@ -131,7 +149,7 @@ function movie_elite_enqueue_scripts() {
 add_action('wp_enqueue_scripts', 'movie_elite_enqueue_scripts');
 
 /**
- * Render Movie Card Component Helper
+ * Render Card Component Helper
  */
 function movie_elite_render_card_item() {
     $post_id = get_the_ID();
@@ -172,7 +190,7 @@ function movie_elite_render_card_item() {
             </h3>
             <div class="card-meta">
                 <span><i class="fa-solid fa-calendar-days"></i> <?php echo esc_html($year); ?></span>
-                <span><i class="fa-solid fa-clock"></i> 2h 15m</span>
+                <span><i class="fa-solid fa-clock"></i> HD Stream</span>
             </div>
         </div>
     </div>
@@ -187,7 +205,7 @@ function movie_elite_ajax_alphabet_filter_handler() {
     $letter = sanitize_text_field($_POST['letter'] ?? '');
 
     $args = array(
-        'post_type'      => 'movies',
+        'post_type'      => array('movies', 'tvshows'),
         'post_status'    => 'publish',
         'posts_per_page' => 20,
         'orderby'        => 'title',
@@ -212,7 +230,7 @@ function movie_elite_ajax_alphabet_filter_handler() {
         }
         wp_reset_postdata();
     } else {
-        echo '<div style="grid-column:1/-1; padding:30px; text-align:center; color:var(--text-muted);">No movies found for letter ' . esc_html($letter) . '</div>';
+        echo '<div style="grid-column:1/-1; padding:30px; text-align:center; color:var(--text-muted);">No items found for letter ' . esc_html($letter) . '</div>';
     }
 
     wp_send_json_success(ob_get_clean());

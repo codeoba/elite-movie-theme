@@ -14,7 +14,7 @@ get_header();
             <div class="slider-container" id="movie-hero-slider">
                 <?php
                 $slider_query = new WP_Query(array(
-                    'post_type'      => 'movies',
+                    'post_type'      => array('movies', 'tvshows'),
                     'post_status'    => 'publish',
                     'posts_per_page' => 5,
                     'orderby'        => 'date',
@@ -52,7 +52,7 @@ get_header();
                             <?php echo esc_html(wp_strip_all_tags($overview)); ?>
                         </p>
                         <a href="<?php echo esc_url($permalink); ?>" class="btn-watch-slide">
-                            <i class="fa-solid fa-play"></i> WATCH MOVIE NOW
+                            <i class="fa-solid fa-play"></i> WATCH NOW
                         </a>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ get_header();
             </div>
         </section>
 
-        <!-- 3. DYNAMIC CATEGORY BLOCKS (CONFIGURED VIA ADMIN BLOCK MANAGER) -->
+        <!-- 3. DYNAMIC CATEGORY BLOCKS -->
         <?php
         $blocks = function_exists('movie_elite_get_blocks_config') ? movie_elite_get_blocks_config() : array();
 
@@ -97,12 +97,12 @@ get_header();
 
             $rule  = $blk['rule'] ?? 'category';
             $val   = $blk['value'] ?? 'recommended';
-            $title = $blk['name'] ?? 'Movies Block';
+            $title = $blk['name'] ?? 'Block';
             $icon  = $blk['icon'] ?? 'fa-film';
 
-            // Build WP_Query args based on filter rules
+            // Query both Movies and TV Shows CPTs
             $query_args = array(
-                'post_type'      => 'movies',
+                'post_type'      => array('movies', 'tvshows'),
                 'post_status'    => 'publish',
                 'posts_per_page' => 10,
                 'orderby'        => 'date',
@@ -132,7 +132,7 @@ get_header();
                 </a>
             </div>
 
-            <!-- Movies Grid -->
+            <!-- Movies & TV Shows Grid -->
             <div class="movies-grid">
                 <?php
                 $block_query = new WP_Query($query_args);
@@ -143,8 +143,8 @@ get_header();
                     endwhile;
                     wp_reset_postdata();
                 else :
-                    // Fallback query if taxonomy term empty
-                    $fallback_query = new WP_Query(array('post_type' => 'movies', 'post_status' => 'publish', 'posts_per_page' => 10, 'orderby' => 'rand'));
+                    // Fallback query if term empty
+                    $fallback_query = new WP_Query(array('post_type' => array('movies', 'tvshows'), 'post_status' => 'publish', 'posts_per_page' => 10, 'orderby' => 'rand'));
                     if ($fallback_query->have_posts()) :
                         while ($fallback_query->have_posts()) : $fallback_query->the_post();
                             movie_elite_render_card_item();

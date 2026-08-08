@@ -1,8 +1,8 @@
 <?php
 /**
- * MovieElite Pro - Dedicated Built-in Meta Box
- * Automatically renders clean input fields for IMDb ID, TMDb ID, Rating, Quality, Year, Poster,
- * Backdrop, Seasons, Episodes, and Download links (No manual custom field typing required!).
+ * MovieElite Pro - Dedicated Built-in Meta Box for Movies & TV Shows
+ * Renders structured input fields for IMDb ID, TMDb ID, Rating, Quality, Year, Poster,
+ * Backdrop, Seasons, Episodes, and Download links on both Movies and TV Shows post types.
  */
 
 if (!defined('ABSPATH')) {
@@ -10,14 +10,14 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Register Meta Box for Movies & TV Shows
+ * Register Meta Box for both Movies (`movies`) and TV Shows (`tvshows`)
  */
 function movie_elite_register_meta_boxes() {
     add_meta_box(
         'movie_elite_options_metabox',
-        '🎬 Movie & TV Show Details, Player & Download Options',
+        '🎬 Details, Player & Download Options',
         'movie_elite_render_meta_box',
-        'movies',
+        array('movies', 'tvshows'),
         'normal',
         'high'
     );
@@ -29,6 +29,9 @@ add_action('add_meta_boxes', 'movie_elite_register_meta_boxes');
  */
 function movie_elite_render_meta_box($post) {
     wp_nonce_field('movie_elite_save_meta_box', 'movie_elite_meta_box_nonce');
+
+    $post_type = get_post_type($post);
+    $is_tv     = ($post_type === 'tvshows');
 
     // Retrieve saved meta values
     $imdb_id           = get_post_meta($post->ID, 'imdb_id', true);
@@ -92,8 +95,8 @@ function movie_elite_render_meta_box($post) {
     </div>
 
     <!-- Section 2: TV Shows & Asian Dramas (Seasons & Episodes) -->
-    <div class="movie-meta-section">
-        <h4><span class="dashicons dashicons-slides"></span> TV Shows & Asian Drama Details</h4>
+    <div class="movie-meta-section" style="<?php echo $is_tv ? 'border-left:4px solid #007cba;' : ''; ?>">
+        <h4><span class="dashicons dashicons-slides"></span> TV Show & Asian Drama Seasons / Episodes</h4>
         <div class="movie-meta-grid">
             <div class="movie-meta-field">
                 <label for="total_seasons">Total Seasons:</label>
@@ -127,15 +130,15 @@ function movie_elite_render_meta_box($post) {
         <div class="movie-meta-grid">
             <div class="movie-meta-field">
                 <label for="download_url_720p">720p HD Download URL:</label>
-                <input type="text" id="download_url_720p" name="download_url_720p" value="<?php echo esc_attr($download_720p); ?>" placeholder="https://download.site/movie-720p.mp4" />
+                <input type="text" id="download_url_720p" name="download_url_720p" value="<?php echo esc_attr($download_720p); ?>" placeholder="https://download.site/720p.mp4" />
             </div>
             <div class="movie-meta-field">
                 <label for="download_url_1080p">1080p Full HD Download URL:</label>
-                <input type="text" id="download_url_1080p" name="download_url_1080p" value="<?php echo esc_attr($download_1080p); ?>" placeholder="https://download.site/movie-1080p.mp4" />
+                <input type="text" id="download_url_1080p" name="download_url_1080p" value="<?php echo esc_attr($download_1080p); ?>" placeholder="https://download.site/1080p.mp4" />
             </div>
             <div class="movie-meta-field" style="grid-column: 1 / -1;">
                 <label for="download_url_4k">4K Ultra HD Download URL:</label>
-                <input type="text" id="download_url_4k" name="download_url_4k" value="<?php echo esc_attr($download_4k); ?>" placeholder="https://download.site/movie-4k.mkv" />
+                <input type="text" id="download_url_4k" name="download_url_4k" value="<?php echo esc_attr($download_4k); ?>" placeholder="https://download.site/4k.mkv" />
             </div>
         </div>
     </div>
@@ -144,7 +147,7 @@ function movie_elite_render_meta_box($post) {
 }
 
 /**
- * Save Meta Box Values
+ * Save Meta Box Values for Movies & TV Shows
  */
 function movie_elite_save_meta_box_data($post_id) {
     if (!isset($_POST['movie_elite_meta_box_nonce']) || !wp_verify_nonce($_POST['movie_elite_meta_box_nonce'], 'movie_elite_save_meta_box')) {
@@ -182,3 +185,4 @@ function movie_elite_save_meta_box_data($post_id) {
     }
 }
 add_action('save_post_movies', 'movie_elite_save_meta_box_data');
+add_action('save_post_tvshows', 'movie_elite_save_meta_box_data');
