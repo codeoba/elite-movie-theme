@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show Detail View (With Direct VidVault Download Link on Player Bar)
+ * MovieElite Pro - Single TV Show Detail View (With Dynamic Admin Embed Manager Filtering)
  */
 
 get_header();
@@ -50,12 +50,8 @@ while (have_posts()) : the_post();
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('TV Series', 'Drama');
 
-    // TV Embed Player Sources (Verified VidSrc SBS & VSEmbed URLs)
-    $embed_server_1 = "https://vidsrc.sbs/embed/tv/{$clean_tmdb}/1/1";
-    $embed_server_2 = "https://vsembed.ru/embed/tv/{$clean_tmdb}/1/1";
-    $embed_server_3 = "https://vidsrc.to/embed/tv/{$clean_tmdb}/1/1";
-    $embed_server_4 = "https://autoembed.net/embed/tv/{$clean_tmdb}/1/1";
-    $embed_server_5 = "https://www.superembed.stream/directstream.php?video_id={$clean_imdb}&tmdb=1";
+    // Dynamic TV Embed Player Sources (Respects Admin Embed Manager Settings & Active Filter)
+    $embeds = function_exists('movie_elite_generate_tv_embeds') ? movie_elite_generate_tv_embeds($clean_imdb, $clean_tmdb, 1, 1) : array();
 ?>
 
 <!-- Lights Off Overlay -->
@@ -76,21 +72,32 @@ while (have_posts()) : the_post();
             <!-- Server Switcher Bar -->
             <div class="server-switcher-bar">
                 <span class="server-label"><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> SELECT SERVER:</span>
-                <button type="button" class="server-tab active" data-url="<?php echo esc_url($embed_server_1); ?>">
+                <?php
+                if (!empty($embeds) && is_array($embeds)) :
+                    $server_num = 0;
+                    foreach ($embeds as $srv) :
+                        $server_num++;
+                        $active = ($server_num === 1) ? 'active' : '';
+                        $srv_url = esc_url($srv['url']);
+                        $srv_name = esc_html($srv['name'] ?? "Server {$server_num}");
+                ?>
+                <button type="button" class="server-tab <?php echo $active; ?>" data-url="<?php echo $srv_url; ?>">
+                    <i class="fa-solid fa-play"></i> <?php echo $srv_name; ?>
+                </button>
+                <?php
+                    endforeach;
+                else :
+                ?>
+                <button type="button" class="server-tab active" data-url="https://vidsrc.sbs/embed/tv/<?php echo esc_attr($clean_tmdb); ?>/1/1">
                     <i class="fa-solid fa-play"></i> Server 1 (VidSrc SBS)
                 </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_2); ?>">
+                <button type="button" class="server-tab" data-url="https://vsembed.ru/embed/tv/<?php echo esc_attr($clean_tmdb); ?>/1/1">
                     <i class="fa-solid fa-play"></i> Server 2 (VSEmbed Stream)
                 </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_3); ?>">
-                    <i class="fa-solid fa-play"></i> Server 3 (VidSrc Pro)
+                <button type="button" class="server-tab" data-url="https://autoembed.net/embed/tv/<?php echo esc_attr($clean_tmdb); ?>/1/1">
+                    <i class="fa-solid fa-play"></i> Server 3 (AutoEmbed Net)
                 </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_4); ?>">
-                    <i class="fa-solid fa-play"></i> Server 4 (AutoEmbed Net)
-                </button>
-                <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_5); ?>">
-                    <i class="fa-solid fa-play"></i> Server 5 (SuperEmbed Stream)
-                </button>
+                <?php endif; ?>
             </div>
 
             <!-- TV Show Season & Episode Selector Bar -->
@@ -118,7 +125,7 @@ while (have_posts()) : the_post();
 
             <!-- Embed Player Frame with referrer & autoplay attributes -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embed_server_1); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/tv/{$clean_tmdb}/1/1"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
