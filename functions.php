@@ -20,6 +20,7 @@ require_once MOVIE_ELITE_DIR . '/inc/block-manager.php';
 require_once MOVIE_ELITE_DIR . '/inc/importer.php';
 require_once MOVIE_ELITE_DIR . '/inc/demo-data.php';
 require_once MOVIE_ELITE_DIR . '/inc/dramacool-importer.php';
+require_once MOVIE_ELITE_DIR . '/inc/features-engine.php';
 
 /**
  * Theme Setup
@@ -147,6 +148,8 @@ function movie_elite_enqueue_scripts() {
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce('movie_elite_nonce')
     ));
+
+    wp_enqueue_script('movie-elite-features', MOVIE_ELITE_URI . '/js/features.js', array(), MOVIE_ELITE_VERSION, true);
 }
 add_action('wp_enqueue_scripts', 'movie_elite_enqueue_scripts');
 
@@ -161,6 +164,7 @@ function movie_elite_render_card_item() {
     $year    = get_post_meta($post_id, 'release_year', true) ?: '2026';
     $quality = get_post_meta($post_id, 'movie_quality', true) ?: '4K UHD';
     $poster  = get_post_meta($post_id, 'poster_url', true);
+    $views   = function_exists('movie_elite_get_views') ? movie_elite_get_views($post_id) : '0';
 
     if (empty($poster) && has_post_thumbnail()) {
         $poster = get_the_post_thumbnail_url($post_id, 'medium');
@@ -173,8 +177,8 @@ function movie_elite_render_card_item() {
     $genre_text = (!empty($genres) && !is_wp_error($genres)) ? $genres[0]->name : 'Cinema';
     ?>
     <div class="movie-card" data-title="<?php echo esc_attr($title); ?>">
-        <a href="<?php echo esc_url($permalink); ?>">
-            <div class="card-poster">
+        <div class="card-poster">
+            <a href="<?php echo esc_url($permalink); ?>" style="display:block;width:100%;height:100%;">
                 <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" />
                 <div class="card-quality-badge"><?php echo esc_html($quality); ?></div>
                 <div class="card-imdb-score"><i class="fa-solid fa-star"></i> <?php echo esc_html($rating); ?></div>
@@ -183,8 +187,11 @@ function movie_elite_render_card_item() {
                         <i class="fa-solid fa-play"></i>
                     </div>
                 </div>
-            </div>
-        </a>
+            </a>
+            <button type="button" class="me-wl-btn" data-id="<?php echo $post_id; ?>" title="Add to Watchlist">
+                <i class="fa-solid fa-heart"></i>
+            </button>
+        </div>
         <div class="card-details">
             <div class="card-genre"><?php echo esc_html($genre_text); ?></div>
             <h3 class="card-title">
@@ -192,7 +199,7 @@ function movie_elite_render_card_item() {
             </h3>
             <div class="card-meta">
                 <span><i class="fa-solid fa-calendar-days"></i> <?php echo esc_html($year); ?></span>
-                <span><i class="fa-solid fa-clock"></i> HD Stream</span>
+                <span><i class="fa-solid fa-eye"></i> <?php echo esc_html($views); ?></span>
             </div>
         </div>
     </div>

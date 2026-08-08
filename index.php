@@ -70,10 +70,20 @@ $hero_query = new WP_Query(array(
         </div>
     </section>
 
-    <!-- Alphabetical A-Z Filter Bar -->
+    <!-- Continue Watching Section (Populated via JS localStorage) -->
+    <section class="container" id="me-continue-watching-section" style="display:none; margin-bottom:30px;">
+        <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:18px 22px;">
+            <h3 style="font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-gold);"></i> Continue Watching
+            </h3>
+            <div id="me-cw-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:14px;"></div>
+        </div>
+    </section>
+
+    <!-- Alphabetical A-Z & Advanced Filter Bar -->
     <section class="alphabet-filter-section">
         <div class="container">
-            <div class="alphabet-bar">
+            <div class="alphabet-bar" style="margin-bottom:14px;">
                 <span class="alphabet-label"><i class="fa-solid fa-arrow-down-a-z"></i> BROWSE BY A-Z:</span>
                 <div class="alphabet-links">
                     <button type="button" class="alphabet-btn active" data-letter="ALL">ALL</button>
@@ -82,6 +92,36 @@ $hero_query = new WP_Query(array(
                         <button type="button" class="alphabet-btn" data-letter="<?php echo $char; ?>"><?php echo $char; ?></button>
                     <?php endforeach; ?>
                 </div>
+            </div>
+
+            <!-- Advanced Filter Accordion / Bar -->
+            <div id="me-advanced-filter-bar" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px 18px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+                <span style="font-size:0.85rem; font-weight:800; color:var(--accent-cyan); display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-filter"></i> FILTER:
+                </span>
+                <select id="me-filter-ptype" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Types (Movies & Shows)</option>
+                    <option value="movies">Movies Only</option>
+                    <option value="tvshows">TV Shows / Dramas</option>
+                </select>
+                <select id="me-filter-genre" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Genres</option>
+                </select>
+                <select id="me-filter-country" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Countries</option>
+                </select>
+                <select id="me-filter-year" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Years</option>
+                </select>
+                <select id="me-filter-quality" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Qualities</option>
+                    <option value="4K">4K Ultra HD</option>
+                    <option value="1080p">1080p Full HD</option>
+                    <option value="720p">720p HD</option>
+                </select>
+                <button type="button" id="me-filter-reset" class="alphabet-btn" style="background:rgba(255,255,255,0.08); color:var(--text-muted);">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
             </div>
         </div>
     </section>

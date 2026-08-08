@@ -108,7 +108,7 @@ while (have_posts()) : the_post();
 <!-- Lights Off Overlay -->
 <div id="lights-off-overlay" style="display:none; position:fixed; inset:0; z-index:999; background:rgba(0,0,0,0.95); transition:all 0.3s;"></div>
 
-<main class="main-content single-movie-wrapper">
+<main class="main-content single-movie-wrapper" data-post-id="<?php echo $post_id; ?>">
     <div class="container">
         
         <!-- Breadcrumbs -->
@@ -202,7 +202,11 @@ while (have_posts()) : the_post();
                 </div>
 
                 <!-- Advanced Action Buttons -->
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <button type="button" class="me-wl-btn alphabet-btn" data-id="<?php echo $post_id; ?>" style="background:rgba(255,45,107,0.15); color:var(--accent-magenta); border:1px solid var(--accent-magenta);">
+                        <i class="fa-solid fa-heart"></i> Watchlist
+                    </button>
+
                     <button type="button" id="btn-toggle-lights" class="alphabet-btn" style="background:rgba(255,183,3,0.15); color:var(--accent-gold); border:1px solid var(--accent-gold);">
                         <i class="fa-solid fa-lightbulb"></i> <span id="lights-btn-text">Lights Off</span>
                     </button>
@@ -253,6 +257,7 @@ while (have_posts()) : the_post();
                     <span><i class="fa-solid fa-calendar-days" style="color:var(--accent-cyan);"></i> Release: <?php echo esc_html($year); ?></span>
                     <span><i class="fa-solid fa-layer-group" style="color:var(--accent-gold);"></i> Seasons: <?php echo esc_html($seasons); ?></span>
                     <span><i class="fa-solid fa-list-ol" style="color:var(--accent-green);"></i> Episodes: <?php echo esc_html($episodes); ?></span>
+                    <span><i class="fa-solid fa-eye" style="color:var(--accent-cyan);"></i> Views: <?php echo function_exists('movie_elite_get_views') ? movie_elite_get_views($post_id) : '1'; ?></span>
                     <span><i class="fa-solid fa-video" style="color:var(--accent-green);"></i> Quality: <?php echo esc_html($quality); ?></span>
                 </div>
 
@@ -278,6 +283,12 @@ while (have_posts()) : the_post();
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <!-- User Ratings & Reviews -->
+                <div style="margin-bottom:30px; background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                    <h3 style="color:#fff; font-size:1.15rem; margin-bottom:16px;"><i class="fa-solid fa-comments" style="color:var(--accent-cyan);"></i> User Ratings & Reviews</h3>
+                    <?php if (function_exists('movie_elite_render_ratings_reviews')) movie_elite_render_ratings_reviews($post_id); ?>
+                </div>
 
                 <!-- Related TV Shows -->
                 <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">Related TV Shows & Dramas</h3>

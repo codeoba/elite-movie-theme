@@ -872,3 +872,143 @@ a:hover {
     font-size: 0.72rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   PRO FEATURES STYLING
+   ═══════════════════════════════════════════════════════ */
+
+/* Watchlist Heart Button */
+.me-wl-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(26, 29, 46, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition);
+  backdrop-filter: blur(8px);
+}
+
+.me-wl-btn:hover,
+.me-wl-btn.active {
+  background: var(--accent-magenta);
+  color: #fff;
+  border-color: var(--accent-magenta);
+  box-shadow: 0 0 12px rgba(255, 45, 107, 0.5);
+}
+
+/* Continue Watching Card */
+.me-cw-card {
+  display: flex;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.me-cw-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-cyan);
+}
+
+.me-cw-thumb {
+  position: relative;
+  width: 50px;
+  height: 70px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.me-cw-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.me-cw-play {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-cyan);
+  font-size: 0.9rem;
+}
+
+.me-cw-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.me-cw-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 4px 0;
+}
+
+.me-cw-meta {
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+/* Star Rating Input Widget */
+.me-stars-input {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 1.4rem;
+  color: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+}
+
+.me-star {
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.me-star:hover,
+.me-star.active {
+  color: var(--accent-gold);
+  transform: scale(1.15);
+}
+
+/* Review Card */
+.me-review-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+/* Countdown Display */
+.me-countdown .cd-unit {
+  display: inline-block;
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
