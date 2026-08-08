@@ -20,36 +20,41 @@
 
             <!-- Search Bar -->
             <div class="nav-search">
-                <i class="fa-solid fa-magnifying-glass nav-search-icon"></i>
-                <input type="text" id="movie-search-input" placeholder="Search movies, tv shows, Asian dramas..." autocomplete="off" />
+                <form method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                    <i class="fa-solid fa-magnifying-glass nav-search-icon"></i>
+                    <input type="text" name="s" id="movie-search-input" value="<?php echo esc_attr(get_search_query()); ?>" placeholder="Search movies, tv shows, Asian dramas..." autocomplete="off" />
+                </form>
             </div>
 
             <!-- Navigation Links -->
             <nav class="site-nav">
                 <ul class="main-nav">
-                    <li class="<?php echo is_front_page() ? 'active' : ''; ?>">
+                    <li class="<?php echo (is_front_page() && !is_search()) ? 'active' : ''; ?>">
                         <a href="<?php echo esc_url(home_url('/')); ?>"><i class="fa-solid fa-house"></i> Home</a>
                     </li>
-                    <li>
-                        <a href="#block-recommended"><i class="fa-solid fa-fire" style="color:var(--accent-gold);"></i> Recommended</a>
+                    <li class="<?php echo is_post_type_archive('movies') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/movies/')); ?>"><i class="fa-solid fa-film" style="color:var(--accent-cyan);"></i> Movies</a>
                     </li>
-                    <li>
-                        <a href="#block-action"><i class="fa-solid fa-gun"></i> Action</a>
+                    <li class="<?php echo is_post_type_archive('tvshows') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/tvshows/')); ?>"><i class="fa-solid fa-tv" style="color:var(--accent-green);"></i> TV Shows</a>
                     </li>
-                    <li>
-                        <a href="#block-romance"><i class="fa-solid fa-heart" style="color:var(--accent-magenta);"></i> Romance</a>
+                    <li class="<?php echo is_tax('movie_category', 'recommended') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/movie_category/recommended/')); ?>"><i class="fa-solid fa-fire" style="color:var(--accent-gold);"></i> Recommended</a>
                     </li>
-                    <li>
-                        <a href="#block-korean"><i class="fa-solid fa-film"></i> Korean</a>
+                    <li class="<?php echo is_tax('genre', 'action') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/genre/action/')); ?>"><i class="fa-solid fa-gun"></i> Action</a>
                     </li>
-                    <li>
-                        <a href="#block-chinese"><i class="fa-solid fa-dragon"></i> Chinese</a>
+                    <li class="<?php echo is_tax('genre', 'romance') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/genre/romance/')); ?>"><i class="fa-solid fa-heart" style="color:var(--accent-magenta);"></i> Romance</a>
                     </li>
-                    <li>
-                        <a href="#block-tvshows"><i class="fa-solid fa-tv"></i> TV Shows</a>
+                    <li class="<?php echo is_tax('movie_category', 'korean') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/movie_category/korean/')); ?>"><i class="fa-solid fa-film"></i> Korean</a>
                     </li>
-                    <li>
-                        <a href="#block-asiandrama"><i class="fa-solid fa-masks-theater"></i> Dramas</a>
+                    <li class="<?php echo is_tax('movie_category', 'chinese') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/movie_category/chinese/')); ?>"><i class="fa-solid fa-dragon"></i> Chinese</a>
+                    </li>
+                    <li class="<?php echo is_tax('movie_category', 'asian-drama') ? 'active' : ''; ?>">
+                        <a href="<?php echo esc_url(home_url('/movie_category/asian-drama/')); ?>"><i class="fa-solid fa-masks-theater"></i> Asian Dramas</a>
                     </li>
                 </ul>
             </nav>

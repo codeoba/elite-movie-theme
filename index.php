@@ -1,58 +1,57 @@
 <?php
 /**
- * MovieElite Pro - Main Frontpage Template
+ * MovieElite Pro - Main Homepage Template
  */
 
 get_header();
+
+// Hero Slider Query (Fetch latest 5 Published items)
+$hero_query = new WP_Query(array(
+    'post_type'      => array('movies', 'tvshows'),
+    'post_status'    => 'publish',
+    'posts_per_page' => 5,
+    'orderby'        => 'date',
+    'order'          => 'DESC'
+));
 ?>
 
 <main class="main-content">
-    <div class="container">
-
-        <!-- 1. HERO SLIDER -->
-        <section class="hero-slider-section">
-            <div class="slider-container" id="movie-hero-slider">
+    
+    <!-- Hero Slider Section -->
+    <section class="hero-slider-section">
+        <div class="container">
+            <div class="slider-container">
                 <?php
-                $slider_query = new WP_Query(array(
-                    'post_type'      => array('movies', 'tvshows'),
-                    'post_status'    => 'publish',
-                    'posts_per_page' => 5,
-                    'orderby'        => 'date',
-                    'order'          => 'DESC'
-                ));
-
-                $slide_index = 0;
-                if ($slider_query->have_posts()) :
-                    while ($slider_query->have_posts()) : $slider_query->the_post();
+                if ($hero_query->have_posts()) :
+                    $slide_index = 0;
+                    while ($hero_query->have_posts()) : $hero_query->the_post();
                         $slide_index++;
-                        $title     = get_the_title();
-                        $permalink = get_permalink();
-                        $rating    = get_post_meta(get_the_ID(), 'imdb_rating', true) ?: '8.5';
-                        $year      = get_post_meta(get_the_ID(), 'release_year', true) ?: '2026';
-                        $poster    = get_post_meta(get_the_ID(), 'backdrop_url', true) ?: get_post_meta(get_the_ID(), 'poster_url', true);
-                        $overview  = get_the_excerpt() ?: get_the_content();
-
-                        if (empty($poster)) {
-                            $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200&auto=format&fit=crop&q=80';
+                        $post_id  = get_the_ID();
+                        $title    = get_the_title();
+                        $rating   = get_post_meta($post_id, 'imdb_rating', true) ?: '8.5';
+                        $year     = get_post_meta($post_id, 'release_year', true) ?: '2026';
+                        $quality  = get_post_meta($post_id, 'movie_quality', true) ?: '4K UHD';
+                        $backdrop = get_post_meta($post_id, 'backdrop_url', true) ?: get_post_meta($post_id, 'poster_url', true);
+                        
+                        if (empty($backdrop)) {
+                            $backdrop = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200&auto=format&fit=crop&q=80';
                         }
+
+                        $genres = get_the_terms($post_id, 'genre');
+                        $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Trending');
                 ?>
-                <div class="slide-item <?php echo ($slide_index === 1) ? 'active' : ''; ?>" style="background-image: url('<?php echo esc_url($poster); ?>');">
+                <div class="slide-item <?php echo ($slide_index === 1) ? 'active' : ''; ?>" style="background-image: url('<?php echo esc_url($backdrop); ?>');">
                     <div class="slide-overlay"></div>
                     <div class="slide-content">
-                        <div class="slide-badge">
-                            <i class="fa-solid fa-fire"></i> FEATURED BLOCKBUSTER
-                        </div>
-                        <h2 class="slide-title"><?php echo esc_html($title); ?></h2>
+                        <span class="slide-badge"><i class="fa-solid fa-fire"></i> <?php echo esc_html(implode(', ', $genre_names)); ?></span>
+                        <h1 class="slide-title"><?php echo esc_html($title); ?></h1>
                         <div class="slide-meta">
                             <span class="imdb-pill"><i class="fa-solid fa-star"></i> IMDb <?php echo esc_html($rating); ?></span>
                             <span><i class="fa-solid fa-calendar-days"></i> <?php echo esc_html($year); ?></span>
-                            <span><i class="fa-solid fa-film"></i> 4K Ultra HD</span>
+                            <span><i class="fa-solid fa-video"></i> <?php echo esc_html($quality); ?></span>
                         </div>
-                        <p style="color:var(--text-muted); font-size:0.92rem; margin-bottom:24px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                            <?php echo esc_html(wp_strip_all_tags($overview)); ?>
-                        </p>
-                        <a href="<?php echo esc_url($permalink); ?>" class="btn-watch-slide">
-                            <i class="fa-solid fa-play"></i> WATCH NOW
+                        <a href="<?php the_permalink(); ?>" class="btn-watch-slide">
+                            <i class="fa-solid fa-play"></i> Watch Now
                         </a>
                     </div>
                 </div>
@@ -62,37 +61,39 @@ get_header();
                 endif;
                 ?>
 
-                <!-- Slider Nav Buttons -->
+                <!-- Slider Controls -->
                 <div class="slider-controls">
                     <button type="button" class="btn-slide-prev" id="btn-hero-prev"><i class="fa-solid fa-chevron-left"></i></button>
                     <button type="button" class="btn-slide-next" id="btn-hero-next"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- 2. ALPHABETICAL FILTER BAR -->
-        <section class="alphabet-filter-section">
+    <!-- Alphabetical A-Z Filter Bar -->
+    <section class="alphabet-filter-section">
+        <div class="container">
             <div class="alphabet-bar">
-                <span class="alphabet-label"><i class="fa-solid fa-filter" style="color:var(--accent-cyan);"></i> FILTER A-Z:</span>
+                <span class="alphabet-label"><i class="fa-solid fa-arrow-down-a-z"></i> BROWSE BY A-Z:</span>
                 <div class="alphabet-links">
                     <button type="button" class="alphabet-btn active" data-letter="ALL">ALL</button>
                     <button type="button" class="alphabet-btn" data-letter="#">#</button>
-                    <?php
-                    foreach (range('A', 'Z') as $letter) {
-                        echo '<button type="button" class="alphabet-btn" data-letter="' . $letter . '">' . $letter . '</button>';
-                    }
-                    ?>
+                    <?php foreach (range('A', 'Z') as $char) : ?>
+                        <button type="button" class="alphabet-btn" data-letter="<?php echo $char; ?>"><?php echo $char; ?></button>
+                    <?php endforeach; ?>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- 3. DYNAMIC CATEGORY BLOCKS -->
+    <!-- Dynamic Section Blocks -->
+    <div class="container">
         <?php
-        $blocks = function_exists('movie_elite_get_blocks_config') ? movie_elite_get_blocks_config() : array();
+        $blocks = movie_elite_get_homepage_blocks();
 
         foreach ($blocks as $id => $blk) :
-            if (($blk['status'] ?? 'off') !== 'on') {
-                continue; // Skip disabled blocks
+            if (($blk['status'] ?? 'active') !== 'active') {
+                continue;
             }
 
             $rule  = $blk['rule'] ?? 'category';
@@ -100,7 +101,26 @@ get_header();
             $title = $blk['name'] ?? 'Block';
             $icon  = $blk['icon'] ?? 'fa-film';
 
-            // Query both Movies and TV Shows CPTs
+            // Determine direct View All URL
+            $view_all_url = home_url('/movies/');
+            if ($rule === 'category' && !empty($val)) {
+                $view_all_url = home_url('/movie_category/' . sanitize_title($val) . '/');
+            } elseif ($rule === 'genre' && !empty($val)) {
+                $view_all_url = home_url('/genre/' . sanitize_title($val) . '/');
+            } elseif ($rule === 'country' && !empty($val)) {
+                $view_all_url = home_url('/country/' . sanitize_title($val) . '/');
+            } elseif ($rule === 'year' && !empty($val)) {
+                $view_all_url = home_url('/?release_year=' . urlencode($val));
+            }
+
+            // Specific overrides
+            if ($id === 'tvshows') {
+                $view_all_url = home_url('/tvshows/');
+            } elseif ($id === 'movies') {
+                $view_all_url = home_url('/movies/');
+            }
+
+            // Query Movies and TV Shows CPTs
             $query_args = array(
                 'post_type'      => array('movies', 'tvshows'),
                 'post_status'    => 'publish',
@@ -127,7 +147,7 @@ get_header();
                     </div>
                     <h2 class="block-title"><?php echo esc_html($title); ?></h2>
                 </div>
-                <a href="<?php echo esc_url(home_url('/?s=' . urlencode($title))); ?>" class="view-all-btn">
+                <a href="<?php echo esc_url($view_all_url); ?>" class="view-all-btn">
                     View All <i class="fa-solid fa-arrow-right"></i>
                 </a>
             </div>
