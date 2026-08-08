@@ -12,6 +12,7 @@ define('MOVIE_ELITE_DIR', get_template_directory());
 define('MOVIE_ELITE_URI', get_template_directory_uri());
 
 // Include Engine Modules
+require_once MOVIE_ELITE_DIR . '/inc/meta-box.php';
 require_once MOVIE_ELITE_DIR . '/inc/embed-manager.php';
 require_once MOVIE_ELITE_DIR . '/inc/embed-scraper.php';
 require_once MOVIE_ELITE_DIR . '/inc/block-manager.php';
@@ -41,9 +42,9 @@ function movie_elite_register_cpt() {
         'name'               => 'Movies & Series',
         'singular_name'      => 'Movie',
         'menu_name'          => 'Movies & Series',
-        'add_new'            => 'Add New Movie',
-        'add_new_item'       => 'Add New Movie',
-        'edit_item'          => 'Edit Movie',
+        'add_new'            => 'Add New Movie / TV Show',
+        'add_new_item'       => 'Add New Movie / TV Show',
+        'edit_item'          => 'Edit Movie / TV Show',
         'new_item'           => 'New Movie',
         'view_item'          => 'View Movie',
         'search_items'       => 'Search Movies',
@@ -64,7 +65,7 @@ function movie_elite_register_cpt() {
         'hierarchical'        => false,
         'menu_position'       => 5,
         'menu_icon'           => 'dashicons-format-video',
-        'supports'            => array('title', 'editor', 'thumbnail', 'custom-fields', 'excerpt'),
+        'supports'            => array('title', 'editor', 'thumbnail', 'excerpt'),
     ));
 
     // Register Category Taxonomy
