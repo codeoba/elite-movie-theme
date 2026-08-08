@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (Compact Poster & Iframe Sandbox Protection)
+ * MovieElite Pro - Single Movie Detail View (Unrestricted Player Iframe & Compact Poster)
  */
 
 get_header();
@@ -121,9 +121,9 @@ while (have_posts()) : the_post();
                 <?php endif; ?>
             </div>
 
-            <!-- Embed Player Frame with referrer, autoplay & sandbox protection -->
+            <!-- Embed Player Frame (Clean Unrestricted Player Iframe) -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/movie/{$clean_tmdb}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-forms" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/movie/{$clean_tmdb}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
