@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (Responsive Details Grid & Direct VidVault Download Link)
+ * MovieElite Pro - Single Movie Detail View (Compact Poster & Iframe Sandbox Protection)
  */
 
 get_header();
@@ -121,9 +121,9 @@ while (have_posts()) : the_post();
                 <?php endif; ?>
             </div>
 
-            <!-- Embed Player Frame with referrer & autoplay attributes -->
+            <!-- Embed Player Frame with referrer, autoplay & sandbox protection -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/movie/{$clean_tmdb}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/movie/{$clean_tmdb}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-forms" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
@@ -154,12 +154,12 @@ while (have_posts()) : the_post();
             </div>
         </div>
 
-        <!-- Movie Details & Metadata Responsive Grid -->
+        <!-- Movie Details & Metadata Grid -->
         <div class="single-details-grid">
-            <!-- Poster Sidebar -->
+            <!-- Compact Poster Sidebar -->
             <div>
-                <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); box-shadow:0 15px 30px rgba(0,0,0,0.5);">
-                    <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" style="width:100%; display:block;" />
+                <div class="single-poster-wrap">
+                    <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" />
                 </div>
             </div>
 
