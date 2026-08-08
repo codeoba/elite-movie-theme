@@ -129,14 +129,98 @@ $hero_query = new WP_Query(array(
                 'order'          => 'DESC'
             );
 
+            // -------------------------------------------------------
+            // Smart Country Matching: Korea, China, Asian Drama
+            // -------------------------------------------------------
+
+            // Korea variants (South Korea, North Korea, Korea etc.)
+            $korea_country_slugs = array(
+                'south-korea', 'korea', 'korean', 'north-korea',
+                'republic-of-korea', 'dprk', 'hanguk'
+            );
+
+            // China / Chinese-speaking region variants
+            $china_country_slugs = array(
+                'china', 'chinese', 'hong-kong', 'taiwan',
+                'peoples-republic-of-china', 'prc', 'mainland-china'
+            );
+
+            // Asian countries for the Asian Drama block
+            $asia_country_slugs = array(
+                // East Asia
+                'south-korea', 'korea', 'korean', 'north-korea',
+                'china', 'chinese', 'hong-kong', 'taiwan',
+                'japan', 'japanese',
+                // Southeast Asia
+                'thailand', 'thai', 'vietnam', 'vietnamese',
+                'philippines', 'filipino', 'indonesia', 'indonesian',
+                'malaysia', 'malaysian', 'singapore',
+                // South Asia
+                'india', 'indian', 'pakistan', 'sri-lanka', 'bangladesh',
+                // Other Asia
+                'mongolia', 'myanmar', 'cambodia', 'laos',
+            );
+
             if ($rule === 'category') {
                 $query_args['tax_query'] = array(array('taxonomy' => 'movie_category', 'field' => 'slug', 'terms' => $val));
+
             } elseif ($rule === 'genre') {
                 $query_args['tax_query'] = array(array('taxonomy' => 'genre', 'field' => 'slug', 'terms' => $val));
+
             } elseif ($rule === 'country') {
-                $query_args['tax_query'] = array(array('taxonomy' => 'country', 'field' => 'slug', 'terms' => $val));
+                // Detect Korea or China block by their configured value
+                $country_val_lower = strtolower(trim($val));
+
+                if (strpos($country_val_lower, 'korea') !== false || $country_val_lower === 'korean') {
+                    // Korean block: match ALL Korea variants
+                    $query_args['tax_query'] = array(array(
+                        'taxonomy' => 'country',
+                        'field'    => 'slug',
+                        'terms'    => $korea_country_slugs,
+                        'operator' => 'IN',
+                    ));
+                } elseif (strpos($country_val_lower, 'chin') !== false || strpos($country_val_lower, 'hong') !== false || $country_val_lower === 'taiwan') {
+                    // Chinese block: match China + HK + Taiwan
+                    $query_args['tax_query'] = array(array(
+                        'taxonomy' => 'country',
+                        'field'    => 'slug',
+                        'terms'    => $china_country_slugs,
+                        'operator' => 'IN',
+                    ));
+                } else {
+                    // Generic country block: single slug match
+                    $query_args['tax_query'] = array(array(
+                        'taxonomy' => 'country',
+                        'field'    => 'slug',
+                        'terms'    => sanitize_title($val),
+                        'operator' => 'IN',
+                    ));
+                }
+
             } elseif ($rule === 'year') {
                 $query_args['meta_query'] = array(array('key' => 'release_year', 'value' => $val, 'compare' => '='));
+            }
+
+            // Special rule for Asian Drama block: query tvshows by ALL Asian countries
+            if ($id === 'asiandrama') {
+                $query_args['post_type'] = array('tvshows'); // Dramas only
+                $query_args['tax_query'] = array(
+                    'relation' => 'OR',
+                    // Match Asian country taxonomy
+                    array(
+                        'taxonomy' => 'country',
+                        'field'    => 'slug',
+                        'terms'    => $asia_country_slugs,
+                        'operator' => 'IN',
+                    ),
+                    // Also match Asian Drama category
+                    array(
+                        'taxonomy' => 'movie_category',
+                        'field'    => 'slug',
+                        'terms'    => array('asian-drama', 'asiandrama', 'asian-dramas', 'kdrama', 'cdrama', 'jdrama', 'thai-drama'),
+                        'operator' => 'IN',
+                    ),
+                );
             }
         ?>
         <section class="movie-section-block" id="block-<?php echo esc_attr($id); ?>">
@@ -163,14 +247,7 @@ $hero_query = new WP_Query(array(
                     endwhile;
                     wp_reset_postdata();
                 else :
-                    // Fallback query if term empty
-                    $fallback_query = new WP_Query(array('post_type' => array('movies', 'tvshows'), 'post_status' => 'publish', 'posts_per_page' => 10, 'orderby' => 'rand'));
-                    if ($fallback_query->have_posts()) :
-                        while ($fallback_query->have_posts()) : $fallback_query->the_post();
-                            movie_elite_render_card_item();
-                        endwhile;
-                        wp_reset_postdata();
-                    endif;
+                    echo '<p style="color:var(--text-muted); padding:20px 0; font-size:0.9rem;"><i class="fa-solid fa-circle-info"></i> No content available for this category yet. Add posts with the matching country or genre tag.</p>';
                 endif;
                 ?>
             </div>
