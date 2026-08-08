@@ -167,6 +167,11 @@ $hero_query = new WP_Query(array(
             } elseif ($rule === 'genre') {
                 $query_args['tax_query'] = array(array('taxonomy' => 'genre', 'field' => 'slug', 'terms' => $val));
 
+            } elseif ($rule === 'post_type') {
+                // post_type rule: query only the specified CPT, no taxonomy filter
+                $query_args['post_type'] = array(sanitize_key($val));
+                // (no tax_query - shows all content of that post type)
+
             } elseif ($rule === 'country') {
                 // Detect Korea or China block by their configured value
                 $country_val_lower = strtolower(trim($val));

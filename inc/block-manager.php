@@ -15,15 +15,16 @@ if (!defined('ABSPATH')) {
  */
 function movie_elite_get_blocks_config() {
     $defaults = array(
-        'recommended' => array('id' => 'recommended', 'name' => 'Recommended Movies', 'status' => 'active', 'rule' => 'category', 'value' => 'recommended', 'icon' => 'fa-fire'),
-        'action'      => array('id' => 'action',      'name' => 'Action Movies',      'status' => 'active', 'rule' => 'genre',    'value' => 'action',      'icon' => 'fa-gun'),
-        'romance'     => array('id' => 'romance',     'name' => 'Romance Movies',     'status' => 'active', 'rule' => 'genre',    'value' => 'romance',     'icon' => 'fa-heart'),
-        'korean'      => array('id' => 'korean',      'name' => 'Korean Movies',      'status' => 'active', 'rule' => 'country',  'value' => 'korea',       'icon' => 'fa-film'),
-        'chinese'     => array('id' => 'chinese',     'name' => 'Chinese Movies',     'status' => 'active', 'rule' => 'country',  'value' => 'china',       'icon' => 'fa-dragon'),
-        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'category', 'value' => 'tvshows',     'icon' => 'fa-tv'),
-        'asiandrama'  => array('id' => 'asiandrama',  'name' => 'Asian Dramas',       'status' => 'active', 'rule' => 'category', 'value' => 'asian-drama', 'icon' => 'fa-masks-theater'),
-        'custom_1'    => array('id' => 'custom_1',    'name' => 'Custom Block 1',     'status' => 'off',   'rule' => 'genre',    'value' => 'sci-fi',      'icon' => 'fa-cube'),
-        'custom_2'    => array('id' => 'custom_2',    'name' => 'Custom Block 2',     'status' => 'off',   'rule' => 'year',     'value' => '2026',        'icon' => 'fa-star'),
+        'recommended' => array('id' => 'recommended', 'name' => 'Recommended Movies', 'status' => 'active', 'rule' => 'category',   'value' => 'recommended', 'icon' => 'fa-fire'),
+        'movies'      => array('id' => 'movies',      'name' => 'Movies',             'status' => 'active', 'rule' => 'post_type', 'value' => 'movies',      'icon' => 'fa-clapperboard'),
+        'action'      => array('id' => 'action',      'name' => 'Action Movies',      'status' => 'active', 'rule' => 'genre',      'value' => 'action',      'icon' => 'fa-gun'),
+        'romance'     => array('id' => 'romance',     'name' => 'Romance Movies',     'status' => 'active', 'rule' => 'genre',      'value' => 'romance',     'icon' => 'fa-heart'),
+        'korean'      => array('id' => 'korean',      'name' => 'Korean Movies',      'status' => 'active', 'rule' => 'country',    'value' => 'korea',       'icon' => 'fa-film'),
+        'chinese'     => array('id' => 'chinese',     'name' => 'Chinese Movies',     'status' => 'active', 'rule' => 'country',    'value' => 'china',       'icon' => 'fa-dragon'),
+        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'category',   'value' => 'tvshows',     'icon' => 'fa-tv'),
+        'asiandrama'  => array('id' => 'asiandrama',  'name' => 'Asian Dramas',       'status' => 'active', 'rule' => 'category',   'value' => 'asian-drama', 'icon' => 'fa-masks-theater'),
+        'custom_1'    => array('id' => 'custom_1',    'name' => 'Custom Block 1',     'status' => 'off',    'rule' => 'genre',      'value' => 'sci-fi',      'icon' => 'fa-cube'),
+        'custom_2'    => array('id' => 'custom_2',    'name' => 'Custom Block 2',     'status' => 'off',    'rule' => 'year',       'value' => '2026',        'icon' => 'fa-star'),
     );
 
     $saved = get_option('movie_elite_blocks_config', array());
@@ -118,10 +119,11 @@ function movie_elite_block_manager_page_render() {
                     </td>
                     <td>
                         <select name="blocks[<?php echo esc_attr($id); ?>][rule]">
-                            <option value="category" <?php selected($blk['rule'], 'category'); ?>>Category</option>
-                            <option value="genre" <?php selected($blk['rule'], 'genre'); ?>>Genre</option>
-                            <option value="country" <?php selected($blk['rule'], 'country'); ?>>Country</option>
-                            <option value="year" <?php selected($blk['rule'], 'year'); ?>>Release Year</option>
+                            <option value="category"  <?php selected($blk['rule'], 'category');  ?>>Category</option>
+                            <option value="genre"     <?php selected($blk['rule'], 'genre');     ?>>Genre</option>
+                            <option value="country"   <?php selected($blk['rule'], 'country');   ?>>Country</option>
+                            <option value="year"      <?php selected($blk['rule'], 'year');      ?>>Release Year</option>
+                            <option value="post_type" <?php selected($blk['rule'], 'post_type'); ?>>Post Type (All)</option>
                         </select>
                     </td>
                     <td>
