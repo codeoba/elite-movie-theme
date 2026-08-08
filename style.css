@@ -10,23 +10,24 @@ License: GNU General Public License v2 or later
 */
 
 :root {
-  --bg-primary: #0b0d14;
-  --bg-secondary: #131722;
-  --bg-card: #191e2d;
-  --bg-card-hover: #22293d;
-  --accent-cyan: #00f2fe;
-  --accent-blue: #4facfe;
-  --accent-magenta: #ff0055;
-  --accent-gold: #ffb703;
-  --accent-green: #00ff88;
-  --text-main: #f0f3f8;
-  --text-muted: #8e9bb0;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(19, 23, 34, 0.88);
+  /* ── Light-Dark Charcoal Palette ── */
+  --bg-primary:     #1a1d2e;   /* was #0b0d14 — now deep slate-blue */
+  --bg-secondary:   #252836;   /* was #131722 — now charcoal */
+  --bg-card:        #2e3247;   /* was #191e2d — now medium slate */
+  --bg-card-hover:  #383c54;   /* was #22293d — now visible hover */
+  --accent-cyan:    #00d4ff;   /* slightly warmer cyan */
+  --accent-blue:    #4facfe;
+  --accent-magenta: #ff2d6b;
+  --accent-gold:    #ffc107;
+  --accent-green:   #00e676;
+  --text-main:      #eef0f6;   /* was #f0f3f8 — still bright white */
+  --text-muted:     #9aa5be;   /* was #8e9bb0 — slightly brighter */
+  --border-color:   rgba(255, 255, 255, 0.12);  /* was 0.08 — more visible */
+  --glass-bg:       rgba(37, 40, 54, 0.92);     /* was near-black glass */
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 18px;
-  --shadow-glow: 0 0 25px rgba(0, 242, 254, 0.2);
+  --shadow-glow: 0 0 28px rgba(0, 212, 255, 0.18);
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -135,8 +136,8 @@ a:hover {
 
 .nav-search input:focus {
   border-color: var(--accent-cyan);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
 }
 
 .nav-search-icon {
@@ -210,7 +211,7 @@ a:hover {
 .slide-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, #0b0d14 0%, rgba(11, 13, 20, 0.65) 50%, rgba(11, 13, 20, 0.2) 100%);
+  background: linear-gradient(0deg, #1a1d2e 0%, rgba(26, 29, 46, 0.65) 50%, rgba(26, 29, 46, 0.15) 100%);
 }
 
 .slide-content {
