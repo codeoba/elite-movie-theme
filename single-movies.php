@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (With Direct VidVault Download Link on Player Bar)
+ * MovieElite Pro - Single Movie Detail View (Responsive Details Grid & Direct VidVault Download Link)
  */
 
 get_header();
@@ -83,7 +83,7 @@ while (have_posts()) : the_post();
         </div>
 
         <!-- Multi-Server Movie Video Player Box -->
-        <div class="movie-player-container" id="player-container-box" style="position:relative; z-index:1000; transition:all 0.3s; margin-bottom: 40px;">
+        <div class="movie-player-container" id="player-container-box">
             <!-- Server Switcher Tabs -->
             <div class="server-switcher-bar">
                 <span class="server-label"><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> SELECT SERVER:</span>
@@ -127,13 +127,13 @@ while (have_posts()) : the_post();
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
-            <div style="padding: 14px 24px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:15px; background: #0d1017; font-size: 0.85rem;">
-                <div style="display:flex; align-items:center; gap:12px;">
+            <div style="padding: 14px 20px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:12px; background: #0d1017; font-size: 0.85rem;">
+                <div style="display:flex; align-items:center; gap:10px;">
                     <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Movie Player Verified</span>
                 </div>
 
                 <!-- Advanced Action Buttons -->
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button type="button" id="btn-toggle-lights" class="alphabet-btn" style="background:rgba(255,183,3,0.15); color:var(--accent-gold); border:1px solid var(--accent-gold);">
                         <i class="fa-solid fa-lightbulb"></i> <span id="lights-btn-text">Lights Off</span>
                     </button>
@@ -154,8 +154,8 @@ while (have_posts()) : the_post();
             </div>
         </div>
 
-        <!-- Movie Details & Metadata -->
-        <div style="display:grid; grid-template-columns: 280px 1fr; gap:35px;">
+        <!-- Movie Details & Metadata Responsive Grid -->
+        <div class="single-details-grid">
             <!-- Poster Sidebar -->
             <div>
                 <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); box-shadow:0 15px 30px rgba(0,0,0,0.5);">
@@ -165,27 +165,27 @@ while (have_posts()) : the_post();
 
             <!-- Info Details -->
             <div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap;">
                     <span class="slide-badge" style="margin:0;"><i class="fa-solid fa-film"></i> <?php echo esc_html(implode(', ', $genre_names)); ?></span>
                     <span style="background:var(--accent-gold); color:#000; font-weight:900; padding:2px 8px; border-radius:4px; font-size:0.8rem;"><i class="fa-solid fa-star"></i> IMDb <?php echo esc_html($rating); ?></span>
                 </div>
 
-                <h1 style="font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 12px; line-height: 1.2;"><?php echo esc_html($title); ?></h1>
+                <h1 style="font-size: 2rem; font-weight: 900; color: #fff; margin-bottom: 12px; line-height: 1.2;"><?php echo esc_html($title); ?></h1>
                 
-                <div style="display:flex; align-items:center; gap:20px; color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">
+                <div style="display:flex; align-items:center; gap:16px; color:var(--text-muted); font-size:0.88rem; margin-bottom:20px; flex-wrap:wrap;">
                     <span><i class="fa-solid fa-calendar-days" style="color:var(--accent-cyan);"></i> Release: <?php echo esc_html($year); ?></span>
                     <span><i class="fa-solid fa-clock" style="color:var(--accent-cyan);"></i> Duration: 2h 18m</span>
                     <span><i class="fa-solid fa-video" style="color:var(--accent-green);"></i> Quality: <?php echo esc_html($quality); ?></span>
                 </div>
 
-                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:10px;">Storyline / Overview</h3>
-                <div style="background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.95rem; line-height:1.7; margin-bottom:30px;">
+                <h3 style="color:#fff; font-size:1.15rem; margin-bottom:10px;">Storyline / Overview</h3>
+                <div style="background:var(--bg-card); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.92rem; line-height:1.7; margin-bottom:30px;">
                     <?php the_content(); ?>
                 </div>
 
                 <!-- Related Movies -->
-                <h3 style="color:#fff; font-size:1.3rem; margin-bottom:15px;">You May Also Like</h3>
-                <div class="movies-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">You May Also Like</h3>
+                <div class="movies-grid">
                     <?php
                     $related_query = new WP_Query(array(
                         'post_type'      => 'movies',

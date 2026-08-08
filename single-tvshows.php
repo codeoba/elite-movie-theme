@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show Detail View (With Dynamic Admin Embed Manager Filtering)
+ * MovieElite Pro - Single TV Show Detail View (Responsive Details Grid & Direct VidVault Download Link)
  */
 
 get_header();
@@ -68,7 +68,7 @@ while (have_posts()) : the_post();
         </div>
 
         <!-- TV Show Player Container -->
-        <div class="movie-player-container" id="player-container-box" style="position:relative; z-index:1000; transition:all 0.3s; margin-bottom: 40px;">
+        <div class="movie-player-container" id="player-container-box">
             <!-- Server Switcher Bar -->
             <div class="server-switcher-bar">
                 <span class="server-label"><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> SELECT SERVER:</span>
@@ -101,21 +101,21 @@ while (have_posts()) : the_post();
             </div>
 
             <!-- TV Show Season & Episode Selector Bar -->
-            <div style="background:#111520; padding:14px 24px; border-bottom:1px solid var(--border-color); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:15px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="font-weight:800; font-size:0.85rem; color:var(--accent-gold);"><i class="fa-solid fa-layer-group"></i> SEASON:</span>
-                    <select id="season-selector-select" style="background:#181e2d; color:#fff; border:1px solid var(--border-color); padding:6px 14px; border-radius:6px; font-weight:700; cursor:pointer;">
+            <div style="background:#111520; padding:12px 18px; border-bottom:1px solid var(--border-color); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-weight:800; font-size:0.82rem; color:var(--accent-gold);"><i class="fa-solid fa-layer-group"></i> SEASON:</span>
+                    <select id="season-selector-select" style="background:#181e2d; color:#fff; border:1px solid var(--border-color); padding:5px 12px; border-radius:6px; font-weight:700; cursor:pointer; font-size:0.85rem;">
                         <?php for ($s = 1; $s <= $seasons; $s++) : ?>
                         <option value="<?php echo $s; ?>">Season <?php echo $s; ?></option>
                         <?php endfor; ?>
                     </select>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span style="font-weight:800; font-size:0.85rem; color:var(--accent-cyan);"><i class="fa-solid fa-list-ol"></i> EPISODES:</span>
-                    <div id="episodes-grid-list" style="display:flex; gap:6px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; padding-bottom:4px;">
+                    <span style="font-weight:800; font-size:0.82rem; color:var(--accent-cyan); white-space:nowrap;"><i class="fa-solid fa-list-ol"></i> EPISODES:</span>
+                    <div id="episodes-grid-list" style="display:flex; gap:5px; flex-wrap:nowrap;">
                         <?php for ($e = 1; $e <= min($episodes, 30); $e++) : ?>
-                        <button type="button" class="alphabet-btn btn-episode-select <?php echo ($e === 1) ? 'active' : ''; ?>" data-episode="<?php echo $e; ?>" style="min-width:36px;">
+                        <button type="button" class="alphabet-btn btn-episode-select <?php echo ($e === 1) ? 'active' : ''; ?>" data-episode="<?php echo $e; ?>" style="min-width:32px; padding:0 8px;">
                             Ep <?php echo $e; ?>
                         </button>
                         <?php endfor; ?>
@@ -129,13 +129,13 @@ while (have_posts()) : the_post();
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
-            <div style="padding: 14px 24px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:15px; background: #0d1017; font-size: 0.85rem;">
-                <div style="display:flex; align-items:center; gap:12px;">
+            <div style="padding: 14px 20px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:12px; background: #0d1017; font-size: 0.85rem;">
+                <div style="display:flex; align-items:center; gap:10px;">
                     <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> TV Show Player Verified</span>
                 </div>
 
                 <!-- Advanced Action Buttons -->
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button type="button" id="btn-toggle-lights" class="alphabet-btn" style="background:rgba(255,183,3,0.15); color:var(--accent-gold); border:1px solid var(--accent-gold);">
                         <i class="fa-solid fa-lightbulb"></i> <span id="lights-btn-text">Lights Off</span>
                     </button>
@@ -156,8 +156,8 @@ while (have_posts()) : the_post();
             </div>
         </div>
 
-        <!-- TV Show Details & Metadata -->
-        <div style="display:grid; grid-template-columns: 280px 1fr; gap:35px;">
+        <!-- TV Show Details & Metadata Responsive Grid -->
+        <div class="single-details-grid">
             <!-- Poster Sidebar -->
             <div>
                 <div style="position:relative; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-color); box-shadow:0 15px 30px rgba(0,0,0,0.5);">
@@ -167,28 +167,28 @@ while (have_posts()) : the_post();
 
             <!-- Info Details -->
             <div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; flex-wrap:wrap;">
                     <span class="slide-badge" style="margin:0;"><i class="fa-solid fa-tv"></i> <?php echo esc_html(implode(', ', $genre_names)); ?></span>
                     <span style="background:var(--accent-gold); color:#000; font-weight:900; padding:2px 8px; border-radius:4px; font-size:0.8rem;"><i class="fa-solid fa-star"></i> IMDb <?php echo esc_html($rating); ?></span>
                 </div>
 
-                <h1 style="font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 12px; line-height: 1.2;"><?php echo esc_html($title); ?></h1>
+                <h1 style="font-size: 2rem; font-weight: 900; color: #fff; margin-bottom: 12px; line-height: 1.2;"><?php echo esc_html($title); ?></h1>
                 
-                <div style="display:flex; align-items:center; gap:20px; color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">
+                <div style="display:flex; align-items:center; gap:16px; color:var(--text-muted); font-size:0.88rem; margin-bottom:20px; flex-wrap:wrap;">
                     <span><i class="fa-solid fa-calendar-days" style="color:var(--accent-cyan);"></i> Release: <?php echo esc_html($year); ?></span>
                     <span><i class="fa-solid fa-layer-group" style="color:var(--accent-gold);"></i> Seasons: <?php echo esc_html($seasons); ?></span>
                     <span><i class="fa-solid fa-list-ol" style="color:var(--accent-green);"></i> Episodes: <?php echo esc_html($episodes); ?></span>
                     <span><i class="fa-solid fa-video" style="color:var(--accent-green);"></i> Quality: <?php echo esc_html($quality); ?></span>
                 </div>
 
-                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:10px;">Storyline / Overview</h3>
-                <div style="background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.95rem; line-height:1.7; margin-bottom:30px;">
+                <h3 style="color:#fff; font-size:1.15rem; margin-bottom:10px;">Storyline / Overview</h3>
+                <div style="background:var(--bg-card); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.92rem; line-height:1.7; margin-bottom:30px;">
                     <?php the_content(); ?>
                 </div>
 
                 <!-- Related TV Shows -->
-                <h3 style="color:#fff; font-size:1.3rem; margin-bottom:15px;">Related TV Shows & Dramas</h3>
-                <div class="movies-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">Related TV Shows & Dramas</h3>
+                <div class="movies-grid">
                     <?php
                     $related_query = new WP_Query(array(
                         'post_type'      => 'tvshows',
