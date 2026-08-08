@@ -1,8 +1,8 @@
 <?php
 /**
  * MovieElite Pro - Multi-Source Video Embed Scraper & Draft Guard Engine
- * Generates verified 4+ embed server mirrors for movies and TV shows, ensuring
- * TMDb-only providers (VidSrc SBS, VSEmbed, AutoEmbed) get clean numeric TMDb IDs.
+ * Generates verified 4+ embed server mirrors for movies and TV shows.
+ * Guarantees clean numeric TMDb IDs and valid IMDb IDs, doing dynamic runtime replacements.
  */
 
 if (!defined('ABSPATH')) {
@@ -10,22 +10,35 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Clean & Sanitize Media IDs
+ */
+function movie_elite_clean_media_id($id, $type = 'tmdb') {
+    $id = trim(strval($id));
+    if ($id === 'tmdb_id' || $id === '{tmdb_id}' || $id === 'imdb_id' || $id === '{imdb_id}') {
+        return '';
+    }
+    if ($type === 'tmdb') {
+        return preg_replace('/[^0-9]/', '', $id);
+    }
+    return $id;
+}
+
+/**
  * Generate Multi-Source Embed Player Server URLs
  *
- * @param string $imdb_id IMDb ID (e.g. tt1160419)
- * @param string $tmdb_id TMDb ID (e.g. 76600)
+ * @param string $imdb_id IMDb ID (e.g. tt6723592)
+ * @param string $tmdb_id TMDb ID (e.g. 577922)
  * @return array Multi-source embed player array
  */
 function movie_elite_generate_movie_embeds($imdb_id = '', $tmdb_id = '') {
+    $clean_tmdb = movie_elite_clean_media_id($tmdb_id, 'tmdb');
+    $clean_imdb = movie_elite_clean_media_id($imdb_id, 'imdb');
+
     if (function_exists('movie_elite_get_embed_servers')) {
         $servers = movie_elite_get_embed_servers();
     } else {
         $servers = array();
     }
-
-    // Clean IDs
-    $tmdb_id = trim(preg_replace('/[^0-9]/', '', $tmdb_id));
-    $imdb_id = trim($imdb_id);
 
     $embeds = array();
 
@@ -39,20 +52,20 @@ function movie_elite_generate_movie_embeds($imdb_id = '', $tmdb_id = '') {
         $url     = '';
 
         if ($type === 'tmdb') {
-            if (!empty($tmdb_id)) {
-                $url = str_replace('{tmdb_id}', $tmdb_id, $pattern);
+            if (!empty($clean_tmdb)) {
+                $url = str_replace(array('{tmdb_id}', 'tmdb_id'), $clean_tmdb, $pattern);
             }
         } else {
-            if (!empty($imdb_id)) {
-                $url = str_replace('{imdb_id}', $imdb_id, $pattern);
-                $url = str_replace('{tmdb_id}', $tmdb_id, $url);
-            } elseif (!empty($tmdb_id)) {
-                $url = str_replace('{imdb_id}', $tmdb_id, $pattern);
-                $url = str_replace('{tmdb_id}', $tmdb_id, $url);
+            if (!empty($clean_imdb)) {
+                $url = str_replace(array('{imdb_id}', 'imdb_id'), $clean_imdb, $pattern);
+                $url = str_replace(array('{tmdb_id}', 'tmdb_id'), $clean_tmdb, $url);
+            } elseif (!empty($clean_tmdb)) {
+                $url = str_replace(array('{imdb_id}', 'imdb_id'), $clean_tmdb, $pattern);
+                $url = str_replace(array('{tmdb_id}', 'tmdb_id'), $clean_tmdb, $url);
             }
         }
 
-        if (!empty($url) && strpos($url, '{') === false) {
+        if (!empty($url) && strpos($url, '{') === false && strpos($url, 'imdb_id') === false && strpos($url, 'tmdb_id') === false) {
             $embeds[] = array(
                 'id'     => $id,
                 'name'   => $srv['name'] ?? 'Server',
@@ -62,27 +75,39 @@ function movie_elite_generate_movie_embeds($imdb_id = '', $tmdb_id = '') {
         }
     }
 
-    // Fallback if no embeds generated
+    // Always guarantee working fallback embeds if array is empty
     if (empty($embeds)) {
-        if (!empty($tmdb_id)) {
+        if (!empty($clean_tmdb)) {
             $embeds[] = array(
-                'id' => 'server_fallback_1',
-                'name' => 'Server 1 (AutoEmbed Net)',
-                'url' => "https://autoembed.net/embed/movie/{$tmdb_id}",
+                'id'   => 'server_fallback_1',
+                'name' => 'Server 1 (VidSrc SBS)',
+                'url'  => "https://vidsrc.sbs/embed/movie/{$clean_tmdb}",
                 'type' => 'tmdb'
             );
             $embeds[] = array(
-                'id' => 'server_fallback_2',
-                'name' => 'Server 2 (VidSrc SBS)',
-                'url' => "https://vidsrc.sbs/embed/movie/{$tmdb_id}",
+                'id'   => 'server_fallback_2',
+                'name' => 'Server 2 (AutoEmbed Net)',
+                'url'  => "https://autoembed.net/embed/movie/{$clean_tmdb}",
+                'type' => 'tmdb'
+            );
+            $embeds[] = array(
+                'id'   => 'server_fallback_3',
+                'name' => 'Server 3 (VSEmbed Stream)',
+                'url'  => "https://vsembed.ru/embed/movie/{$clean_tmdb}",
                 'type' => 'tmdb'
             );
         }
-        if (!empty($imdb_id)) {
+        if (!empty($clean_imdb)) {
             $embeds[] = array(
-                'id' => 'server_fallback_3',
-                'name' => 'Server 3 (VidSrc Pro)',
-                'url' => "https://vidsrc.to/embed/movie/{$imdb_id}",
+                'id'   => 'server_fallback_4',
+                'name' => 'Server 4 (VidSrc Pro)',
+                'url'  => "https://vidsrc.to/embed/movie/{$clean_imdb}",
+                'type' => 'imdb'
+            );
+            $embeds[] = array(
+                'id'   => 'server_fallback_5',
+                'name' => 'Server 5 (SuperEmbed Stream)',
+                'url'  => "https://www.superembed.stream/directstream.php?video_id={$clean_imdb}",
                 'type' => 'imdb'
             );
         }

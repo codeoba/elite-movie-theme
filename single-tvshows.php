@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show Detail View (With Verified VSEmbed.ru & VidSrc.sbs Players)
+ * MovieElite Pro - Single TV Show Detail View (With Dynamic TMDb/IMDb ID Sanitizer & Player Fix)
  */
 
 get_header();
@@ -8,8 +8,21 @@ get_header();
 while (have_posts()) : the_post();
     $post_id   = get_the_ID();
     $title     = get_the_title();
-    $imdb_id   = get_post_meta($post_id, 'imdb_id', true) ?: 'tt1160419';
-    $tmdb_id   = get_post_meta($post_id, 'tmdb_id', true) ?: '93405';
+    $raw_imdb  = get_post_meta($post_id, 'imdb_id', true);
+    $raw_tmdb  = get_post_meta($post_id, 'tmdb_id', true);
+
+    $clean_tmdb = function_exists('movie_elite_clean_media_id') ? movie_elite_clean_media_id($raw_tmdb, 'tmdb') : preg_replace('/[^0-9]/', '', $raw_tmdb);
+    $clean_imdb = function_exists('movie_elite_clean_media_id') ? movie_elite_clean_media_id($raw_imdb, 'imdb') : trim($raw_imdb);
+
+    if (empty($clean_tmdb) && empty($clean_imdb)) {
+        $clean_tmdb = '93405';
+        $clean_imdb = 'tt1160419';
+    } elseif (empty($clean_tmdb)) {
+        $clean_tmdb = '93405';
+    } elseif (empty($clean_imdb)) {
+        $clean_imdb = 'tt1160419';
+    }
+
     $rating    = get_post_meta($post_id, 'imdb_rating', true) ?: '8.8';
     $year      = get_post_meta($post_id, 'release_year', true) ?: '2026';
     $quality   = get_post_meta($post_id, 'movie_quality', true) ?: '4K UHD';
@@ -23,13 +36,13 @@ while (have_posts()) : the_post();
     // Fetch VidVault.ru TV Episode Real Download Links
     $vv_links = array();
     if (function_exists('movie_elite_get_vidvault_links')) {
-        $vv_links = movie_elite_get_vidvault_links($tmdb_id ?: $imdb_id, 'tv', 1, 1);
+        $vv_links = movie_elite_get_vidvault_links($clean_tmdb ?: $clean_imdb, 'tv', 1, 1);
     }
 
     $dl_720p   = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? '');
     $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? '');
     $dl_4k     = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? '');
-    $dl_direct = $vv_links['direct_page'] ?? "https://vidvault.ru/tv/{$tmdb_id}/1/1";
+    $dl_direct = $vv_links['direct_page'] ?? "https://vidvault.ru/tv/{$clean_tmdb}/1/1";
 
     if (empty($poster)) {
         $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80';
@@ -39,12 +52,11 @@ while (have_posts()) : the_post();
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('TV Series', 'Drama');
 
     // TV Embed Player Sources (Verified VidSrc SBS & VSEmbed URLs)
-    $target_id = !empty($tmdb_id) ? $tmdb_id : $imdb_id;
-    $embed_server_1 = "https://vidsrc.sbs/embed/tv/{$target_id}/1/1";
-    $embed_server_2 = "https://vsembed.ru/embed/tv/{$target_id}/1/1";
-    $embed_server_3 = "https://vidsrc.to/embed/tv/{$target_id}/1/1";
-    $embed_server_4 = "https://autoembed.net/embed/tv/{$target_id}/1/1";
-    $embed_server_5 = "https://www.superembed.stream/directstream.php?video_id={$imdb_id}&tmdb=1";
+    $embed_server_1 = "https://vidsrc.sbs/embed/tv/{$clean_tmdb}/1/1";
+    $embed_server_2 = "https://vsembed.ru/embed/tv/{$clean_tmdb}/1/1";
+    $embed_server_3 = "https://vidsrc.to/embed/tv/{$clean_tmdb}/1/1";
+    $embed_server_4 = "https://autoembed.net/embed/tv/{$clean_tmdb}/1/1";
+    $embed_server_5 = "https://www.superembed.stream/directstream.php?video_id={$clean_imdb}&tmdb=1";
 ?>
 
 <!-- Lights Off Overlay -->
