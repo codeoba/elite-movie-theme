@@ -41,14 +41,21 @@ function movie_elite_get_embed_servers() {
             ),
             'server_4' => array(
                 'id'       => 'server_4',
-                'name'     => 'Server 4 (2Embed Mirror)',
-                'pattern'  => 'https://www.2embed.cc/embed/{imdb_id}',
-                'type'     => 'imdb',
+                'name'     => 'Server 4 (VidSrc SBS)',
+                'pattern'  => 'https://vidsrc.sbs/embed/movie/{tmdb_id}',
+                'type'     => 'tmdb',
                 'status'   => 'active'
             ),
             'server_5' => array(
                 'id'       => 'server_5',
-                'name'     => 'Server 5 (MovieAPI Fast)',
+                'name'     => 'Server 5 (2Embed Mirror)',
+                'pattern'  => 'https://www.2embed.cc/embed/{imdb_id}',
+                'type'     => 'imdb',
+                'status'   => 'active'
+            ),
+            'server_6' => array(
+                'id'       => 'server_6',
+                'name'     => 'Server 6 (MovieAPI Fast)',
                 'pattern'  => 'https://vidsrc.me/embed/movie?imdb={imdb_id}',
                 'type'     => 'imdb',
                 'status'   => 'active'
@@ -124,7 +131,7 @@ function movie_elite_embed_manager_page_render() {
             <span class="dashicons dashicons-video-alt3" style="font-size:32px; color:#00f2fe;"></span>
             Movie Player Embed Source Manager
         </h1>
-        <p>Manage, edit, add, or update embed player domain patterns for all movies. (Updated with official <strong>https://www.superembed.stream/</strong> and <strong>https://autoembed.net/</strong> domains).</p>
+        <p>Manage, edit, add, or update embed player domain patterns for all movies. (Updated with official <strong>https://vidsrc.sbs/embed/movie/{tmdb_id}</strong> server).</p>
         <hr />
 
         <form method="post" action="">
@@ -172,18 +179,18 @@ function movie_elite_embed_manager_page_render() {
             <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ccd0d4; max-width:700px;">
                 <p>
                     <label><strong>Server Name:</strong></label><br />
-                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 6 (SuperEmbed VIP Stream)" />
+                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 7 (VidSrc SBS Mirror)" />
                 </p>
                 <p>
                     <label><strong>URL Pattern:</strong></label><br />
-                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://www.superembed.stream/directstream.php?video_id={imdb_id}" />
+                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://vidsrc.sbs/embed/movie/{tmdb_id}" />
                     <span class="description">Must include <code>{imdb_id}</code> or <code>{tmdb_id}</code> placeholder.</span>
                 </p>
                 <p>
                     <label><strong>ID Type:</strong></label><br />
                     <select name="new_server_type">
-                        <option value="imdb">IMDb ID (tt1234567)</option>
                         <option value="tmdb">TMDb ID (12345)</option>
+                        <option value="imdb">IMDb ID (tt1234567)</option>
                     </select>
                 </p>
             </div>
