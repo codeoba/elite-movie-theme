@@ -13,6 +13,7 @@ define('MOVIE_ELITE_URI', get_template_directory_uri());
 
 // Include Engine Modules
 require_once MOVIE_ELITE_DIR . '/inc/meta-box.php';
+require_once MOVIE_ELITE_DIR . '/inc/vidvault-downloader.php';
 require_once MOVIE_ELITE_DIR . '/inc/embed-manager.php';
 require_once MOVIE_ELITE_DIR . '/inc/embed-scraper.php';
 require_once MOVIE_ELITE_DIR . '/inc/block-manager.php';

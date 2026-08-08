@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show & Drama Detail View (With Season & Episode Controls)
+ * MovieElite Pro - Single TV Show Detail View (Powered by VidVault.ru Download Engine)
  */
 
 get_header();
@@ -20,10 +20,16 @@ while (have_posts()) : the_post();
     $seasons   = intval(get_post_meta($post_id, 'total_seasons', true) ?: 1);
     $episodes  = intval(get_post_meta($post_id, 'total_episodes', true) ?: 12);
 
-    // Download Links
-    $dl_720p   = get_post_meta($post_id, 'download_url_720p', true);
-    $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true);
-    $dl_4k     = get_post_meta($post_id, 'download_url_4k', true);
+    // Fetch VidVault.ru TV Episode Real Download Links
+    $vv_links = array();
+    if (function_exists('movie_elite_get_vidvault_links')) {
+        $vv_links = movie_elite_get_vidvault_links($tmdb_id ?: $imdb_id, 'tv', 1, 1);
+    }
+
+    $dl_720p   = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? '');
+    $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? '');
+    $dl_4k     = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? '');
+    $dl_direct = $vv_links['direct_page'] ?? "https://vidvault.ru/tv/{$tmdb_id}/1/1";
 
     if (empty($poster)) {
         $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80';
@@ -126,22 +132,25 @@ while (have_posts()) : the_post();
             </div>
         </div>
 
-        <!-- Download Links Section Card -->
+        <!-- VidVault Download Links Section Card -->
         <div id="download-section-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:25px; margin-bottom:40px; box-shadow:0 15px 30px rgba(0,0,0,0.5);">
-            <h3 style="color:#fff; font-size:1.3rem; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-download" style="color:var(--accent-green);"></i> Direct TV Show & Episode Download Links
+            <h3 style="color:#fff; font-size:1.3rem; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Download Episodes (Powered by VidVault Engine)
             </h3>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Download <?php echo esc_html($title); ?> episodes in your preferred resolution:</p>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Download <?php echo esc_html($title); ?> episodes via VidVault:</p>
             
             <div style="display:flex; flex-wrap:wrap; gap:15px;">
-                <a href="<?php echo esc_url($dl_720p ?: "https://www.google.com/search?q=" . urlencode($title . " tv show download 720p")); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00b4d8, #0077b6); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 720p HD Episodes
+                <a href="<?php echo esc_url($dl_720p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00b4d8, #0077b6); color:#fff;">
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 720p HD Episode (VidVault)
                 </a>
-                <a href="<?php echo esc_url($dl_1080p ?: "https://www.google.com/search?q=" . urlencode($title . " tv show download 1080p")); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00f2fe, #4facfe); color:#000;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 1080p Full HD Episodes
+                <a href="<?php echo esc_url($dl_1080p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00f2fe, #4facfe); color:#000;">
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 1080p Full HD Episode (VidVault)
                 </a>
-                <a href="<?php echo esc_url($dl_4k ?: "https://www.google.com/search?q=" . urlencode($title . " tv show download 4k")); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #ff0055, #ff5252); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 4K Ultra HD Episodes
+                <a href="<?php echo esc_url($dl_4k); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #ff0055, #ff5252); color:#fff;">
+                    <i class="fa-solid fa-file-arrow-down"></i> Download 4K Ultra HD Episode (VidVault)
+                </a>
+                <a href="<?php echo esc_url($dl_direct); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2);">
+                    <i class="fa-solid fa-external-link"></i> VidVault Portal Direct Episode Page
                 </a>
             </div>
         </div>
