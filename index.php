@@ -246,6 +246,20 @@ $hero_query = new WP_Query(array(
                 $query_args['meta_query'] = array(array('key' => 'release_year', 'value' => $val, 'compare' => '='));
             }
 
+            // Special rule for TV Shows block: query all tvshows CPT posts directly
+            if ($id === 'tvshows' || ($rule === 'post_type' && $val === 'tvshows') || ($rule === 'category' && ($val === 'tvshows' || $val === 'tv-shows'))) {
+                $query_args['post_type'] = array('tvshows');
+                unset($query_args['tax_query']);
+                $view_all_url = home_url('/tvshows/');
+            }
+
+            // Special rule for Movies block: query all movies CPT posts directly
+            if ($id === 'movies' || ($rule === 'post_type' && $val === 'movies')) {
+                $query_args['post_type'] = array('movies');
+                unset($query_args['tax_query']);
+                $view_all_url = home_url('/movies/');
+            }
+
             // Special rule for Asian Drama block: query tvshows by ALL Asian countries
             if ($id === 'asiandrama') {
                 $query_args['post_type'] = array('tvshows'); // Dramas only

@@ -136,6 +136,25 @@ function movie_elite_register_cpts() {
 add_action('init', 'movie_elite_register_cpts');
 
 /**
+ * Modify main query for taxonomy and post type archives to include 'movies' & 'tvshows'
+ */
+function movie_elite_archive_query_modifier($query) {
+    if (!is_admin() && $query->is_main_query()) {
+        if ($query->is_post_type_archive('tvshows')) {
+            $query->set('post_type', array('tvshows'));
+            $query->set('posts_per_page', 24);
+        } elseif ($query->is_post_type_archive('movies')) {
+            $query->set('post_type', array('movies'));
+            $query->set('posts_per_page', 24);
+        } elseif ($query->is_tax('movie_category') || $query->is_tax('genre') || $query->is_tax('country')) {
+            $query->set('post_type', array('movies', 'tvshows'));
+            $query->set('posts_per_page', 24);
+        }
+    }
+}
+add_action('pre_get_posts', 'movie_elite_archive_query_modifier');
+
+/**
  * Enqueue Scripts & Styles
  */
 function movie_elite_enqueue_scripts() {

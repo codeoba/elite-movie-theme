@@ -21,7 +21,7 @@ function movie_elite_get_blocks_config() {
         'romance'     => array('id' => 'romance',     'name' => 'Romance Movies',     'status' => 'active', 'rule' => 'genre',      'value' => 'romance',     'icon' => 'fa-heart'),
         'korean'      => array('id' => 'korean',      'name' => 'Korean Movies',      'status' => 'active', 'rule' => 'country',    'value' => 'korea',       'icon' => 'fa-film'),
         'chinese'     => array('id' => 'chinese',     'name' => 'Chinese Movies',     'status' => 'active', 'rule' => 'country',    'value' => 'china',       'icon' => 'fa-dragon'),
-        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'category',   'value' => 'tvshows',     'icon' => 'fa-tv'),
+        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'post_type',  'value' => 'tvshows',     'icon' => 'fa-tv'),
         'asiandrama'  => array('id' => 'asiandrama',  'name' => 'Asian Dramas',       'status' => 'active', 'rule' => 'category',   'value' => 'asian-drama', 'icon' => 'fa-masks-theater'),
         'custom_1'    => array('id' => 'custom_1',    'name' => 'Custom Block 1',     'status' => 'off',    'rule' => 'genre',      'value' => 'sci-fi',      'icon' => 'fa-cube'),
         'custom_2'    => array('id' => 'custom_2',    'name' => 'Custom Block 2',     'status' => 'off',    'rule' => 'year',       'value' => '2026',        'icon' => 'fa-star'),
