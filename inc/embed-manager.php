@@ -27,8 +27,8 @@ function movie_elite_get_embed_servers() {
             ),
             'server_2' => array(
                 'id'       => 'server_2',
-                'name'     => 'Server 2 (SuperEmbed)',
-                'pattern'  => 'https://multiembed.mov/directstream.php?video_id={imdb_id}',
+                'name'     => 'Server 2 (SuperEmbed Stream)',
+                'pattern'  => 'https://www.superembed.stream/directstream.php?video_id={imdb_id}',
                 'type'     => 'imdb',
                 'status'   => 'active'
             ),
@@ -124,7 +124,7 @@ function movie_elite_embed_manager_page_render() {
             <span class="dashicons dashicons-video-alt3" style="font-size:32px; color:#00f2fe;"></span>
             Movie Player Embed Source Manager
         </h1>
-        <p>Manage, edit, add, or update embed player domain patterns for all movies. (Updated with official <strong>https://autoembed.net/embed/movie/{tmdb_id}</strong> domain).</p>
+        <p>Manage, edit, add, or update embed player domain patterns for all movies. (Updated with official <strong>https://www.superembed.stream/</strong> and <strong>https://autoembed.net/</strong> domains).</p>
         <hr />
 
         <form method="post" action="">
@@ -172,18 +172,18 @@ function movie_elite_embed_manager_page_render() {
             <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ccd0d4; max-width:700px;">
                 <p>
                     <label><strong>Server Name:</strong></label><br />
-                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 6 (AutoEmbed Net Alternate)" />
+                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 6 (SuperEmbed VIP Stream)" />
                 </p>
                 <p>
                     <label><strong>URL Pattern:</strong></label><br />
-                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://autoembed.net/embed/movie/{tmdb_id}" />
+                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://www.superembed.stream/directstream.php?video_id={imdb_id}" />
                     <span class="description">Must include <code>{imdb_id}</code> or <code>{tmdb_id}</code> placeholder.</span>
                 </p>
                 <p>
                     <label><strong>ID Type:</strong></label><br />
                     <select name="new_server_type">
-                        <option value="tmdb">TMDb ID (12345)</option>
                         <option value="imdb">IMDb ID (tt1234567)</option>
+                        <option value="tmdb">TMDb ID (12345)</option>
                     </select>
                 </p>
             </div>

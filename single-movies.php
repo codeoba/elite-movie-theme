@@ -60,14 +60,14 @@ while (have_posts()) : the_post();
                 <?php
                     endforeach;
                 else :
-                    // Fallback Server list with official autoembed.net domain
+                    // Fallback Server list with official SuperEmbed.stream and AutoEmbed.net domains
                     $fallback_url = "https://vidsrc.to/embed/movie/{$imdb_id}";
                 ?>
                 <button type="button" class="server-tab active" data-url="<?php echo esc_url($fallback_url); ?>">
                     <i class="fa-solid fa-play"></i> Server 1 (VidSrc Pro)
                 </button>
-                <button type="button" class="server-tab" data-url="https://multiembed.mov/directstream.php?video_id=<?php echo esc_attr($imdb_id); ?>">
-                    <i class="fa-solid fa-play"></i> Server 2 (SuperEmbed)
+                <button type="button" class="server-tab" data-url="https://www.superembed.stream/directstream.php?video_id=<?php echo esc_attr($imdb_id); ?>">
+                    <i class="fa-solid fa-play"></i> Server 2 (SuperEmbed Stream)
                 </button>
                 <button type="button" class="server-tab" data-url="https://autoembed.net/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
                     <i class="fa-solid fa-play"></i> Server 3 (AutoEmbed Net)
@@ -86,7 +86,7 @@ while (have_posts()) : the_post();
             <!-- Player Sub-Bar -->
             <div style="padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; background: #0d1017; font-size: 0.85rem; color: var(--text-muted);">
                 <div>
-                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Active Multi-Source Player (AutoEmbed.net Verified)</span>
+                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Active Multi-Source Player (SuperEmbed.stream Verified)</span>
                 </div>
                 <div style="display:flex; gap:12px;">
                     <button type="button" class="alphabet-btn" onclick="document.getElementById('main-movie-iframe').src=document.getElementById('main-movie-iframe').src;" style="background:rgba(255,255,255,0.08);"><i class="fa-solid fa-rotate-right"></i> Reload</button>
