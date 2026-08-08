@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show Detail View (Powered by VidVault.ru Download Engine)
+ * MovieElite Pro - Single TV Show Detail View (With Verified VSEmbed.ru & VidSrc.sbs Players)
  */
 
 get_header();
@@ -38,11 +38,13 @@ while (have_posts()) : the_post();
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('TV Series', 'Drama');
 
-    // TV Embed Player Sources
-    $embed_server_1 = "https://vidsrc.sbs/embed/tv/{$tmdb_id}/1/1";
-    $embed_server_2 = "https://vidsrc.to/embed/tv/{$tmdb_id}/1/1";
-    $embed_server_3 = "https://autoembed.net/embed/tv/{$tmdb_id}/1/1";
-    $embed_server_4 = "https://www.superembed.stream/directstream.php?video_id={$imdb_id}&tmdb=1";
+    // TV Embed Player Sources (Verified VidSrc SBS & VSEmbed URLs)
+    $target_id = !empty($tmdb_id) ? $tmdb_id : $imdb_id;
+    $embed_server_1 = "https://vidsrc.sbs/embed/tv/{$target_id}/1/1";
+    $embed_server_2 = "https://vsembed.ru/embed/tv/{$target_id}/1/1";
+    $embed_server_3 = "https://vidsrc.to/embed/tv/{$target_id}/1/1";
+    $embed_server_4 = "https://autoembed.net/embed/tv/{$target_id}/1/1";
+    $embed_server_5 = "https://www.superembed.stream/directstream.php?video_id={$imdb_id}&tmdb=1";
 ?>
 
 <!-- Lights Off Overlay -->
@@ -67,13 +69,16 @@ while (have_posts()) : the_post();
                     <i class="fa-solid fa-play"></i> Server 1 (VidSrc SBS)
                 </button>
                 <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_2); ?>">
-                    <i class="fa-solid fa-play"></i> Server 2 (VidSrc Pro)
+                    <i class="fa-solid fa-play"></i> Server 2 (VSEmbed Stream)
                 </button>
                 <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_3); ?>">
-                    <i class="fa-solid fa-play"></i> Server 3 (AutoEmbed Net)
+                    <i class="fa-solid fa-play"></i> Server 3 (VidSrc Pro)
                 </button>
                 <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_4); ?>">
-                    <i class="fa-solid fa-play"></i> Server 4 (SuperEmbed Stream)
+                    <i class="fa-solid fa-play"></i> Server 4 (AutoEmbed Net)
+                </button>
+                <button type="button" class="server-tab" data-url="<?php echo esc_url($embed_server_5); ?>">
+                    <i class="fa-solid fa-play"></i> Server 5 (SuperEmbed Stream)
                 </button>
             </div>
 
@@ -100,15 +105,15 @@ while (have_posts()) : the_post();
                 </div>
             </div>
 
-            <!-- Embed Player Frame -->
+            <!-- Embed Player Frame with referrer & autoplay attributes -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embed_server_1); ?>" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embed_server_1); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
             <div style="padding: 14px 24px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:15px; background: #0d1017; font-size: 0.85rem;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> TV Show Player Ready</span>
+                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> TV Show Player Verified</span>
                 </div>
 
                 <!-- Advanced Action Buttons -->

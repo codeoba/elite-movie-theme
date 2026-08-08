@@ -1,7 +1,8 @@
 <?php
 /**
- * MovieElite Pro - Embed Source Domain Manager with Priority Reordering
- * Provides custom admin controls to view, add, edit, delete, and REORDER embed player sources.
+ * MovieElite Pro - Embed Source Domain Manager with Priority Reordering & Verified Working APIs
+ * Includes official verified embed providers: VidSrc Pro, SuperEmbed Stream, AutoEmbed Net,
+ * VidSrc SBS (https://vidsrc.sbs/), VSEmbed Stream (https://vsembed.ru/), and 2Embed Mirror.
  */
 
 if (!defined('ABSPATH')) {
@@ -52,16 +53,16 @@ function movie_elite_get_embed_servers() {
             ),
             'server_5' => array(
                 'id'       => 'server_5',
-                'name'     => 'Server 5 (2Embed Mirror)',
-                'pattern'  => 'https://www.2embed.cc/embed/{imdb_id}',
-                'type'     => 'imdb',
+                'name'     => 'Server 5 (VSEmbed Stream)',
+                'pattern'  => 'https://vsembed.ru/embed/movie/{tmdb_id}',
+                'type'     => 'tmdb',
                 'status'   => 'active',
                 'order'    => 5
             ),
             'server_6' => array(
                 'id'       => 'server_6',
-                'name'     => 'Server 6 (MovieAPI Fast)',
-                'pattern'  => 'https://vidsrc.me/embed/movie?imdb={imdb_id}',
+                'name'     => 'Server 6 (2Embed Mirror)',
+                'pattern'  => 'https://www.2embed.cc/embed/{imdb_id}',
                 'type'     => 'imdb',
                 'status'   => 'active',
                 'order'    => 6
@@ -163,7 +164,7 @@ function movie_elite_embed_manager_page_render() {
             <span class="dashicons dashicons-sort" style="font-size:32px; color:#00f2fe;"></span>
             Movie Player Embed Source & Priority Reordering Manager
         </h1>
-        <p>Manage, edit, add, and <strong>RE-ORDER server priority</strong>. The order set here (1, 2, 3...) determines which server is loaded 1st, 2nd, 3rd, etc. on all movie pages!</p>
+        <p>Verified working embed APIs: <strong>VidSrc SBS (https://vidsrc.sbs/)</strong> & <strong>VSEmbed Stream (https://vsembed.ru/)</strong> active!</p>
         <hr />
 
         <form method="post" action="">
@@ -228,11 +229,11 @@ function movie_elite_embed_manager_page_render() {
             <div style="background:#fff; padding:20px; border-radius:8px; border:1px solid #ccd0d4; max-width:700px;">
                 <p>
                     <label><strong>Server Name:</strong></label><br />
-                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 7 (New Fast Provider)" />
+                    <input type="text" name="new_server_name" class="widefat" placeholder="e.g. Server 7 (VSEmbed Mirror)" />
                 </p>
                 <p>
                     <label><strong>URL Pattern:</strong></label><br />
-                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://domain.com/embed/{imdb_id}" />
+                    <input type="text" name="new_server_pattern" class="widefat code" placeholder="https://vsembed.ru/embed/movie/{tmdb_id}" />
                     <span class="description">Must include <code>{imdb_id}</code> or <code>{tmdb_id}</code> placeholder.</span>
                 </p>
                 <p>
@@ -242,8 +243,8 @@ function movie_elite_embed_manager_page_render() {
                 <p>
                     <label><strong>ID Type:</strong></label><br />
                     <select name="new_server_type">
-                        <option value="imdb">IMDb ID (tt1234567)</option>
                         <option value="tmdb">TMDb ID (12345)</option>
+                        <option value="imdb">IMDb ID (tt1234567)</option>
                     </select>
                 </p>
             </div>

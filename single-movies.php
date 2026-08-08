@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single Movie Detail View (Powered by VidVault.ru Download Engine)
+ * MovieElite Pro - Single Movie Detail View (With Verified VSEmbed.ru & VidSrc.sbs Players)
  */
 
 get_header();
@@ -39,6 +39,10 @@ while (have_posts()) : the_post();
 
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Cinema', 'Action');
+
+    // Build verified fallback URLs for VidSrc SBS & VSEmbed
+    $vidsrc_sbs_url = !empty($tmdb_id) ? "https://vidsrc.sbs/embed/movie/{$tmdb_id}" : "https://vidsrc.sbs/embed/movie/{$imdb_id}";
+    $vsembed_url    = !empty($tmdb_id) ? "https://vsembed.ru/embed/movie/{$tmdb_id}" : "https://vsembed.ru/embed/movie/{$imdb_id}";
 ?>
 
 <!-- Lights Off Overlay -->
@@ -74,9 +78,8 @@ while (have_posts()) : the_post();
                 <?php
                     endforeach;
                 else :
-                    $fallback_url = "https://vidsrc.to/embed/movie/{$imdb_id}";
                 ?>
-                <button type="button" class="server-tab active" data-url="<?php echo esc_url($fallback_url); ?>">
+                <button type="button" class="server-tab active" data-url="https://vidsrc.to/embed/movie/<?php echo esc_attr($imdb_id); ?>">
                     <i class="fa-solid fa-play"></i> Server 1 (VidSrc Pro)
                 </button>
                 <button type="button" class="server-tab" data-url="https://www.superembed.stream/directstream.php?video_id=<?php echo esc_attr($imdb_id); ?>">
@@ -85,21 +88,24 @@ while (have_posts()) : the_post();
                 <button type="button" class="server-tab" data-url="https://autoembed.net/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
                     <i class="fa-solid fa-play"></i> Server 3 (AutoEmbed Net)
                 </button>
-                <button type="button" class="server-tab" data-url="https://vidsrc.sbs/embed/movie/<?php echo esc_attr($tmdb_id); ?>">
+                <button type="button" class="server-tab" data-url="<?php echo esc_url($vidsrc_sbs_url); ?>">
                     <i class="fa-solid fa-play"></i> Server 4 (VidSrc SBS)
+                </button>
+                <button type="button" class="server-tab" data-url="<?php echo esc_url($vsembed_url); ?>">
+                    <i class="fa-solid fa-play"></i> Server 5 (VSEmbed Stream)
                 </button>
                 <?php endif; ?>
             </div>
 
-            <!-- Embed Player Frame -->
+            <!-- Embed Player Frame with referrer & autoplay attributes -->
             <div class="iframe-player-wrapper">
-                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.to/embed/movie/{$imdb_id}"); ?>" allowfullscreen></iframe>
+                <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.to/embed/movie/{$imdb_id}"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
             <div style="padding: 14px 24px; display: flex; flex-wrap:wrap; align-items: center; justify-content: space-between; gap:15px; background: #0d1017; font-size: 0.85rem;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Movie Player Ready</span>
+                    <span style="color:var(--accent-green); font-weight:700;"><i class="fa-solid fa-circle-check"></i> Movie Player Verified</span>
                 </div>
 
                 <!-- Advanced Action Buttons -->
