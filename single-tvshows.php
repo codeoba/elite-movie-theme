@@ -1,6 +1,6 @@
 <?php
 /**
- * MovieElite Pro - Single TV Show Detail View (With Direct VidVault Download Buttons)
+ * MovieElite Pro - Single TV Show Detail View (With Direct VidVault Download Link on Player Bar)
  */
 
 get_header();
@@ -40,12 +40,7 @@ while (have_posts()) : the_post();
     }
 
     $vidvault_direct_url = "https://vidvault.ru/tv/{$clean_tmdb}/1/1";
-
-    $dl_720p   = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? $vidvault_direct_url);
     $dl_1080p  = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? $vidvault_direct_url);
-    $dl_4k     = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? $vidvault_direct_url);
-    
-    // Primary Download Link for feature bar button
     $primary_download_url = !empty($dl_1080p) ? $dl_1080p : $vidvault_direct_url;
 
     if (empty($poster)) {
@@ -77,7 +72,7 @@ while (have_posts()) : the_post();
         </div>
 
         <!-- TV Show Player Container -->
-        <div class="movie-player-container" id="player-container-box" style="position:relative; z-index:1000; transition:all 0.3s;">
+        <div class="movie-player-container" id="player-container-box" style="position:relative; z-index:1000; transition:all 0.3s; margin-bottom: 40px;">
             <!-- Server Switcher Bar -->
             <div class="server-switcher-bar">
                 <span class="server-label"><i class="fa-solid fa-server" style="color:var(--accent-cyan);"></i> SELECT SERVER:</span>
@@ -142,7 +137,7 @@ while (have_posts()) : the_post();
                         <i class="fa-solid fa-expand"></i> Theater Mode
                     </button>
 
-                    <!-- Direct VidVault Download Link Button in Player Sub-Bar -->
+                    <!-- Direct VidVault Download Link Button on Player Sub-Bar -->
                     <a href="<?php echo esc_url($primary_download_url); ?>" target="_blank" rel="noopener" class="alphabet-btn" style="background:rgba(0,255,136,0.15); color:var(--accent-green); border:1px solid var(--accent-green); text-decoration:none;">
                         <i class="fa-solid fa-download"></i> Download Episode
                     </a>
@@ -151,26 +146,6 @@ while (have_posts()) : the_post();
                         <i class="fa-solid fa-rotate-right"></i> Reload
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- VidVault Download Links Section Card -->
-        <div id="download-section-box" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-lg); padding:25px; margin-bottom:40px; box-shadow:0 15px 30px rgba(0,0,0,0.5);">
-            <h3 style="color:#fff; font-size:1.3rem; margin-bottom:10px; display:flex; align-items:center; gap:10px;">
-                <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Download Episodes (VidVault Direct HD Links)
-            </h3>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:20px;">Click any quality option below to download <?php echo esc_html($title); ?> episodes directly:</p>
-            
-            <div style="display:flex; flex-wrap:wrap; gap:15px;">
-                <a href="<?php echo esc_url($dl_720p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00b4d8, #0077b6); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 720p HD Episode
-                </a>
-                <a href="<?php echo esc_url($dl_1080p); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #00f2fe, #4facfe); color:#000;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 1080p Full HD Episode
-                </a>
-                <a href="<?php echo esc_url($dl_4k); ?>" target="_blank" rel="noopener" class="btn-watch-slide" style="background:linear-gradient(135deg, #ff0055, #ff5252); color:#fff;">
-                    <i class="fa-solid fa-file-arrow-down"></i> Download 4K Ultra HD Episode
-                </a>
             </div>
         </div>
 
