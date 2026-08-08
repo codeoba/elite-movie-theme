@@ -19,6 +19,7 @@ require_once MOVIE_ELITE_DIR . '/inc/embed-scraper.php';
 require_once MOVIE_ELITE_DIR . '/inc/block-manager.php';
 require_once MOVIE_ELITE_DIR . '/inc/importer.php';
 require_once MOVIE_ELITE_DIR . '/inc/demo-data.php';
+require_once MOVIE_ELITE_DIR . '/inc/dramacool-importer.php';
 
 /**
  * Theme Setup

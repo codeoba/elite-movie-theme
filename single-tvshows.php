@@ -33,6 +33,15 @@ while (have_posts()) : the_post();
     $seasons   = intval(get_post_meta($post_id, 'total_seasons', true) ?: 1);
     $episodes  = intval(get_post_meta($post_id, 'total_episodes', true) ?: 12);
 
+    // Fetch DramaCool scraped episodes data (if drama was imported via DramaCool importer)
+    $dc_episodes_data = get_post_meta($post_id, 'dramacool_episodes_data', true);
+    $has_dc_episodes  = (!empty($dc_episodes_data) && is_array($dc_episodes_data));
+
+    // If DramaCool episodes exist, override episode count from real scraped data
+    if ($has_dc_episodes) {
+        $episodes = count($dc_episodes_data);
+    }
+
     // Fetch VidVault.ru TV Episode Real Download Links
     $vv_links = array();
     if (function_exists('movie_elite_get_vidvault_links')) {
@@ -50,8 +59,16 @@ while (have_posts()) : the_post();
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('TV Series', 'Drama');
 
-    // Dynamic TV Embed Player Sources (Respects Admin Embed Manager Settings & Active Filter)
-    $embeds = function_exists('movie_elite_generate_tv_embeds') ? movie_elite_generate_tv_embeds($clean_imdb, $clean_tmdb, 1, 1) : array();
+    // Dynamic TV Embed Player Sources:
+    // - DramaCool dramas: use scraped servers for Episode 1
+    // - Regular TV shows: use embed-manager (vidsrc, vsembed etc.)
+    if ($has_dc_episodes) {
+        // Get servers for episode 1 from DramaCool scraped data
+        $first_ep_key = array_key_first($dc_episodes_data);
+        $embeds = $dc_episodes_data[$first_ep_key]['servers'] ?? array();
+    } else {
+        $embeds = function_exists('movie_elite_generate_tv_embeds') ? movie_elite_generate_tv_embeds($clean_imdb, $clean_tmdb, 1, 1) : array();
+    }
 ?>
 
 <!-- Lights Off Overlay -->
@@ -114,11 +131,27 @@ while (have_posts()) : the_post();
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch; padding-bottom:4px;">
                     <span style="font-weight:800; font-size:0.82rem; color:var(--accent-cyan); white-space:nowrap;"><i class="fa-solid fa-list-ol"></i> EPISODES:</span>
                     <div id="episodes-grid-list" style="display:flex; gap:5px; flex-wrap:nowrap;">
-                        <?php for ($e = 1; $e <= min($episodes, 30); $e++) : ?>
-                        <button type="button" class="alphabet-btn btn-episode-select <?php echo ($e === 1) ? 'active' : ''; ?>" data-episode="<?php echo $e; ?>" style="min-width:32px; padding:0 8px;">
-                            Ep <?php echo $e; ?>
-                        </button>
-                        <?php endfor; ?>
+                        <?php
+                        if ($has_dc_episodes) {
+                            // DramaCool imported drama: render real episode buttons from scraped data
+                            $ep_idx = 0;
+                            foreach ($dc_episodes_data as $ep_num => $ep_data) {
+                                $ep_idx++;
+                                $ep_label = 'Ep ' . esc_html($ep_num);
+                                $is_active = ($ep_idx === 1) ? 'active' : '';
+                                // Encode servers JSON for this episode into data attribute
+                                $ep_servers_json = esc_attr(json_encode($ep_data['servers'] ?? array()));
+                                echo '<button type="button" class="alphabet-btn btn-episode-select ' . $is_active . '" data-episode="' . esc_attr($ep_num) . '" data-servers="' . $ep_servers_json . '" style="min-width:32px; padding:0 8px;">' . $ep_label . '</button>';
+                            }
+                        } else {
+                            // Regular TV show: numeric episode buttons (update URL via season/episode pattern)
+                            for ($e = 1; $e <= min($episodes, 30); $e++) : ?>
+                            <button type="button" class="alphabet-btn btn-episode-select <?php echo ($e === 1) ? 'active' : ''; ?>" data-episode="<?php echo $e; ?>" style="min-width:32px; padding:0 8px;">
+                                Ep <?php echo $e; ?>
+                            </button>
+                            <?php endfor;
+                        }
+                        ?>
                     </div>
                 </div>
             </div>
@@ -214,5 +247,128 @@ while (have_posts()) : the_post();
 
 <?php
 endwhile;
+?>
+
+<script>
+(function() {
+    'use strict';
+
+    var hasDcEpisodes = <?php echo $has_dc_episodes ? 'true' : 'false'; ?>;
+    var cleanTmdb     = '<?php echo esc_js($clean_tmdb); ?>';
+
+    // ---------- Server tab switcher (shared for all TV shows) ----------
+    document.querySelectorAll('.server-tab').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.server-tab').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            var iframe = document.getElementById('main-movie-iframe');
+            if (iframe && this.dataset.url) {
+                iframe.src = this.dataset.url;
+            }
+        });
+    });
+
+    // ---------- Episode selector ----------
+    document.querySelectorAll('.btn-episode-select').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            // Active state
+            document.querySelectorAll('.btn-episode-select').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+
+            var iframe = document.getElementById('main-movie-iframe');
+
+            if (hasDcEpisodes) {
+                // DramaCool drama: swap server buttons to this episode's real servers
+                var serversRaw = this.getAttribute('data-servers');
+                var servers = [];
+                try { servers = JSON.parse(serversRaw || '[]'); } catch(e) {}
+
+                var bar = document.querySelector('.server-switcher-bar');
+                if (bar && servers.length) {
+                    // Remove old server buttons (keep the label span)
+                    bar.querySelectorAll('.server-tab').forEach(function(b) { b.remove(); });
+
+                    servers.forEach(function(srv, idx) {
+                        var newBtn = document.createElement('button');
+                        newBtn.type = 'button';
+                        newBtn.className = 'server-tab' + (idx === 0 ? ' active' : '');
+                        newBtn.setAttribute('data-url', srv.url || '');
+                        newBtn.innerHTML = '<i class="fa-solid fa-play"></i> ' + (srv.name || ('Server ' + (idx + 1)));
+                        newBtn.addEventListener('click', function() {
+                            bar.querySelectorAll('.server-tab').forEach(function(b) { b.classList.remove('active'); });
+                            this.classList.add('active');
+                            if (iframe && this.dataset.url) { iframe.src = this.dataset.url; }
+                        });
+                        bar.appendChild(newBtn);
+                    });
+
+                    // Load first server
+                    if (iframe && servers[0] && servers[0].url) {
+                        iframe.src = servers[0].url;
+                    }
+                }
+            } else {
+                // Regular TV show: update episode number in all server URLs
+                var epNum  = this.getAttribute('data-episode') || '1';
+                var selSeason = document.getElementById('season-selector-select');
+                var seasonNum = selSeason ? selSeason.value : '1';
+
+                document.querySelectorAll('.server-tab').forEach(function(b) {
+                    var url = b.getAttribute('data-url') || '';
+                    // Replace /S/E pattern in URL  e.g. /1/1 -> /1/2
+                    url = url.replace(/\/\d+\/\d+$/, '/' + seasonNum + '/' + epNum);
+                    b.setAttribute('data-url', url);
+                    if (b.classList.contains('active') && iframe) {
+                        iframe.src = url;
+                    }
+                });
+            }
+        });
+    });
+
+    // Season change for regular TV shows
+    var seasonSelect = document.getElementById('season-selector-select');
+    if (seasonSelect) {
+        seasonSelect.addEventListener('change', function() {
+            if (hasDcEpisodes) return; // DramaCool dramas are single-season
+            var seasonNum = this.value;
+            var epNum = '1';
+            var activeEp = document.querySelector('.btn-episode-select.active');
+            if (activeEp) { epNum = activeEp.getAttribute('data-episode') || '1'; }
+
+            var iframe = document.getElementById('main-movie-iframe');
+            document.querySelectorAll('.server-tab').forEach(function(b) {
+                var url = b.getAttribute('data-url') || '';
+                url = url.replace(/\/\d+\/\d+$/, '/' + seasonNum + '/' + epNum);
+                b.setAttribute('data-url', url);
+                if (b.classList.contains('active') && iframe) { iframe.src = url; }
+            });
+        });
+    }
+
+    // Lights Off toggle
+    var lightsBtn = document.getElementById('btn-toggle-lights');
+    var lightsOverlay = document.getElementById('lights-off-overlay');
+    var lightsBtnText = document.getElementById('lights-btn-text');
+    if (lightsBtn && lightsOverlay) {
+        lightsBtn.addEventListener('click', function() {
+            var isOff = lightsOverlay.style.display !== 'none';
+            lightsOverlay.style.display = isOff ? 'none' : 'block';
+            if (lightsBtnText) { lightsBtnText.textContent = isOff ? 'Lights Off' : 'Lights On'; }
+        });
+    }
+
+    // Theater Mode toggle
+    var expandBtn = document.getElementById('btn-toggle-expand');
+    var playerBox = document.getElementById('player-container-box');
+    if (expandBtn && playerBox) {
+        expandBtn.addEventListener('click', function() {
+            playerBox.classList.toggle('theater-mode-active');
+        });
+    }
+})();
+</script>
+
+<?php
 get_footer();
 ?>
