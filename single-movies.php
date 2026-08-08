@@ -53,17 +53,60 @@ while (have_posts()) : the_post();
         $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&auto=format&fit=crop&q=80';
     }
 
-    // Generate or fetch Embed Servers
-    $embeds = function_exists('movie_elite_generate_movie_embeds') ? movie_elite_generate_movie_embeds($clean_imdb, $clean_tmdb) : array();
+    // Generate or fetch Embed Servers (auto)
+    $auto_embeds = function_exists('movie_elite_generate_movie_embeds') ? movie_elite_generate_movie_embeds($clean_imdb, $clean_tmdb) : array();
 
-    // Sanitize any remaining placeholders in embed URLs
-    if (!empty($embeds) && is_array($embeds)) {
-        foreach ($embeds as &$srv) {
+    // Sanitize any remaining placeholders in auto embed URLs
+    if (!empty($auto_embeds) && is_array($auto_embeds)) {
+        foreach ($auto_embeds as &$srv) {
             $srv['url'] = str_replace(array('{tmdb_id}', 'tmdb_id'), $clean_tmdb, $srv['url']);
             $srv['url'] = str_replace(array('{imdb_id}', 'imdb_id'), $clean_imdb, $srv['url']);
         }
         unset($srv);
     }
+
+    // Manual Player Embeds (meta) — prepended FIRST before auto servers
+    $manual_players = get_post_meta($post_id, 'manual_player_embeds', true);
+    if (empty($manual_players) || !is_array($manual_players)) {
+        // Fallback: check legacy primary_embed_url
+        $legacy_embed = get_post_meta($post_id, 'primary_embed_url', true);
+        $manual_players = $legacy_embed ? array(array('label' => 'Server 1 (Manual)', 'url' => $legacy_embed)) : array();
+    }
+
+    // Renumber manual servers and merge: manual first, then auto
+    $embeds = array();
+    $srv_counter = 1;
+    foreach ($manual_players as $mp) {
+        if (!empty($mp['url'])) {
+            $embeds[] = array(
+                'name' => $mp['label'] ?: 'Server ' . $srv_counter,
+                'url'  => $mp['url']
+            );
+            $srv_counter++;
+        }
+    }
+    foreach ($auto_embeds as $ae) {
+        $embeds[] = array(
+            'name' => $ae['name'] ?? 'Server ' . $srv_counter,
+            'url'  => $ae['url']
+        );
+        $srv_counter++;
+    }
+
+    // Manual Download Links (meta)
+    $manual_downloads = get_post_meta($post_id, 'manual_download_links', true);
+    if (empty($manual_downloads) || !is_array($manual_downloads)) {
+        // Fallback to legacy single download fields
+        $manual_downloads = array();
+        $l720  = get_post_meta($post_id, 'download_url_720p', true);
+        $l1080 = get_post_meta($post_id, 'download_url_1080p', true);
+        $l4k   = get_post_meta($post_id, 'download_url_4k', true);
+        if ($l720)  { $manual_downloads[] = array('label' => '720p HD',         'url' => $l720); }
+        if ($l1080) { $manual_downloads[] = array('label' => '1080p Full HD',   'url' => $l1080); }
+        if ($l4k)   { $manual_downloads[] = array('label' => '4K Ultra HD',     'url' => $l4k); }
+    }
+    // Primary download URL = first manual download, else VidVault fallback
+    $primary_download_url = !empty($manual_downloads[0]['url']) ? $manual_downloads[0]['url'] : $vidvault_direct_url;
 
     $genres = get_the_terms($post_id, 'genre');
     $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Cinema', 'Action');
@@ -142,10 +185,18 @@ while (have_posts()) : the_post();
                         <i class="fa-solid fa-expand"></i> Theater Mode
                     </button>
 
-                    <!-- Direct VidVault Download Link Button on Player Sub-Bar -->
+                    <!-- Download Buttons (Manual or Fallback) -->
+                    <?php if (!empty($manual_downloads)) :
+                        foreach ($manual_downloads as $dl) :
+                            if (empty($dl['url'])) continue; ?>
+                    <a href="<?php echo esc_url($dl['url']); ?>" target="_blank" rel="noopener" class="alphabet-btn" style="background:rgba(0,255,136,0.15); color:var(--accent-green); border:1px solid var(--accent-green); text-decoration:none;">
+                        <i class="fa-solid fa-download"></i> <?php echo esc_html($dl['label'] ?: 'Download'); ?>
+                    </a>
+                    <?php endforeach; else : ?>
                     <a href="<?php echo esc_url($primary_download_url); ?>" target="_blank" rel="noopener" class="alphabet-btn" style="background:rgba(0,255,136,0.15); color:var(--accent-green); border:1px solid var(--accent-green); text-decoration:none;">
                         <i class="fa-solid fa-download"></i> Download Movie
                     </a>
+                    <?php endif; ?>
 
                     <button type="button" class="alphabet-btn" onclick="document.getElementById('main-movie-iframe').src=document.getElementById('main-movie-iframe').src;" style="background:rgba(255,255,255,0.08);">
                         <i class="fa-solid fa-rotate-right"></i> Reload
@@ -179,9 +230,27 @@ while (have_posts()) : the_post();
                 </div>
 
                 <h3 style="color:#fff; font-size:1.15rem; margin-bottom:10px;">Storyline / Overview</h3>
-                <div style="background:var(--bg-card); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.92rem; line-height:1.7; margin-bottom:30px;">
+                <div style="background:var(--bg-card); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.92rem; line-height:1.7; margin-bottom:20px;">
                     <?php the_content(); ?>
                 </div>
+
+                <!-- Download Links Section -->
+                <?php if (!empty($manual_downloads)) : ?>
+                <div style="margin-bottom:28px;">
+                    <h3 style="color:#fff; font-size:1.1rem; margin-bottom:10px;"><i class="fa-solid fa-download" style="color:var(--accent-green);"></i> Download Links</h3>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <?php foreach ($manual_downloads as $dl) :
+                            if (empty($dl['url'])) continue; ?>
+                        <a href="<?php echo esc_url($dl['url']); ?>" target="_blank" rel="noopener"
+                           style="display:inline-flex; align-items:center; gap:7px; background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:8px; padding:9px 18px; text-decoration:none; font-weight:700; font-size:0.88rem; transition:all 0.2s;"
+                           onmouseover="this.style.background='rgba(0,255,136,0.25)'" onmouseout="this.style.background='rgba(0,255,136,0.12)'">
+                            <i class="fa-solid fa-file-arrow-down"></i>
+                            <?php echo esc_html($dl['label'] ?: 'Download'); ?>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <!-- Related Movies -->
                 <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">You May Also Like</h3>
