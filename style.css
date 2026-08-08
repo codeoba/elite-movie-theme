@@ -152,11 +152,11 @@ a:hover {
   max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: none;
 }
 
 .site-nav::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
 }
 
 .main-nav {
@@ -688,7 +688,7 @@ a:hover {
 
 @media (max-width: 768px) {
   .container {
-    padding: 0 14px;
+    padding: 0 10px;
   }
 
   .header-inner {
@@ -764,9 +764,47 @@ a:hover {
     font-size: 0.78rem;
   }
 
+  /* 3 COLUMNS GRID ON MOBILE PHONES */
   .movies-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .movie-card {
+    border-radius: var(--radius-sm);
+  }
+
+  .card-details {
+    padding: 6px;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+    line-height: 1.25;
+  }
+
+  .card-genre {
+    font-size: 0.65rem;
+  }
+
+  .card-meta {
+    font-size: 0.65rem;
+    padding-top: 4px;
+  }
+
+  .card-quality-badge {
+    top: 4px;
+    left: 4px;
+    padding: 2px 4px;
+    font-size: 0.58rem;
+  }
+
+  .card-imdb-score {
+    top: 4px;
+    right: 4px;
+    padding: 2px 4px;
+    font-size: 0.6rem;
   }
 
   .single-details-grid {
@@ -785,25 +823,31 @@ a:hover {
 }
 
 @media (max-width: 480px) {
+  .container {
+    padding: 0 8px;
+  }
+
+  /* 3 COLUMNS GRID ON SMALL MOBILE SCREENS */
   .movies-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
   }
 
   .card-details {
-    padding: 8px;
+    padding: 5px;
   }
 
   .card-title {
-    font-size: 0.82rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
   }
 
   .server-switcher-bar {
-    padding: 10px 12px;
+    padding: 10px 10px;
   }
 
   .server-tab {
-    padding: 6px 12px;
-    font-size: 0.75rem;
+    padding: 5px 10px;
+    font-size: 0.72rem;
   }
 }
