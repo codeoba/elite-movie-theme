@@ -111,7 +111,7 @@ $nav_years = array('2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019
                     </li>
 
                     <!-- YEARS DROPDOWN -->
-                    <li class="has-dropdown <?php echo isset($_GET['release_year']) ? 'active' : ''; ?>">
+                    <li class="has-dropdown dropdown-right <?php echo isset($_GET['release_year']) ? 'active' : ''; ?>">
                         <a href="#"><i class="fa-solid fa-calendar-days" style="color:var(--accent-green);"></i> Year</a>
                         <div class="nav-dropdown">
                             <div class="nav-dropdown-title"><i class="fa-solid fa-clock"></i> Release Year</div>

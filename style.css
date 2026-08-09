@@ -199,27 +199,33 @@ a:hover {
 
 /* Nav Dropdown Container */
 .nav-dropdown {
+  display: none;
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: rgba(37, 40, 54, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  left: 0;
+  background: #252836;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-md);
-  padding: 16px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 212, 255, 0.15);
+  padding: 14px 16px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 212, 255, 0.15);
   backdrop-filter: blur(25px);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-  z-index: 1200;
-  min-width: 220px;
+  z-index: 99999;
+  white-space: normal;
 }
 
 .main-nav > li.has-dropdown:hover .nav-dropdown {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  display: block;
+  animation: meNavFadeIn 0.2s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes meNavFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.main-nav > li.has-dropdown.dropdown-right .nav-dropdown {
+  left: auto;
+  right: 0;
 }
 
 .nav-dropdown-title {
