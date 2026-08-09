@@ -104,6 +104,10 @@ function movie_elite_render_meta_box($post) {
                     <input type="number" id="release_year" name="release_year" value="<?php echo esc_attr($release_year); ?>" placeholder="e.g. 2026" />
                 </div>
                 <div class="me-field" style="grid-column:1/-1">
+                    <label for="trailer_url">YouTube Official Trailer Link / ID:</label>
+                    <input type="text" id="trailer_url" name="trailer_url" value="<?php echo esc_attr(get_post_meta($pid, 'trailer_url', true)); ?>" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ" />
+                </div>
+                <div class="me-field" style="grid-column:1/-1">
                     <label for="movie_quality">Video Quality Tag:</label>
                     <select id="movie_quality" name="movie_quality" style="max-width:240px">
                         <option value="4K UHD"       <?php selected($movie_quality,'4K UHD'); ?>>4K Ultra HD</option>
@@ -233,7 +237,7 @@ function movie_elite_save_meta_box_data($post_id) {
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) { return; }
     if (!current_user_can('edit_post', $post_id)) { return; }
 
-    $scalar = array('imdb_id','tmdb_id','imdb_rating','release_year','movie_quality','poster_url','backdrop_url','total_seasons','total_episodes');
+    $scalar = array('imdb_id','tmdb_id','imdb_rating','release_year','movie_quality','poster_url','backdrop_url','total_seasons','total_episodes','trailer_url');
     foreach ($scalar as $f) {
         if (isset($_POST[$f])) { update_post_meta($post_id, $f, sanitize_text_field($_POST[$f])); }
     }

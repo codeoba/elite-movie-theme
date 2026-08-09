@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MovieElite Pro - Features Engine JS
  * Handles: Watchlist, Continue Watching, Star Ratings, Reviews, Advanced Filter, Countdown
  */
@@ -323,6 +323,190 @@ function initCountdowns() {
     });
 }
 
+// ═══ LIVE INSTANT SEARCH ═══
+function initLiveSearch() {
+    var searchInput = document.getElementById('movie-search-input');
+    var resultsBox  = document.getElementById('live-search-results');
+    if (!searchInput || !resultsBox) return;
+
+    var debounceTimer;
+    searchInput.addEventListener('input', function() {
+        var query = searchInput.value.trim();
+        clearTimeout(debounceTimer);
+        if (query.length < 2) {
+            resultsBox.style.display = 'none';
+            resultsBox.innerHTML = '';
+            return;
+        }
+
+        debounceTimer = setTimeout(function() {
+            fetch(AJAX + '?action=movie_elite_live_search&s=' + encodeURIComponent(query))
+                .then(function(r) { return r.json(); })
+                .then(function(resp) {
+                    if (resp.success && resp.data.results && resp.data.results.length > 0) {
+                        var html = '<div class="live-results-list">';
+                        resp.data.results.forEach(function(item) {
+                            html += '<a href="' + item.permalink + '" class="live-search-item">';
+                            html += '<img src="' + item.poster + '" alt="' + item.title + '" />';
+                            html += '<div class="live-item-info">';
+                            html += '<span class="live-item-type">' + item.type + ' • ⭐ ' + item.rating + '</span>';
+                            html += '<h5 class="live-item-title">' + item.title + ' (' + item.year + ')</h5>';
+                            html += '</div></a>';
+                        });
+                        html += '</div>';
+                        resultsBox.innerHTML = html;
+                        resultsBox.style.display = 'block';
+                    } else {
+                        resultsBox.innerHTML = '<div style="padding:15px;text-align:center;color:var(--text-muted);font-size:0.85rem;">No results found for "' + query + '"</div>';
+                        resultsBox.style.display = 'block';
+                    }
+                });
+        }, 250);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+            resultsBox.style.display = 'none';
+        }
+    });
+}
+
+// ═══ ACCENT THEME COLOR SWITCHER ═══
+function initAccentSwitcher() {
+    var savedColor = localStorage.getItem('me_accent_color');
+    if (savedColor) {
+        document.documentElement.style.setProperty('--accent-cyan', savedColor);
+    }
+    document.querySelectorAll('.accent-dot').forEach(function(dot) {
+        dot.addEventListener('click', function() {
+            var color = dot.getAttribute('data-color');
+            if (color) {
+                document.documentElement.style.setProperty('--accent-cyan', color);
+                localStorage.setItem('me_accent_color', color);
+            }
+        });
+    });
+}
+
+// ═══ OFFICIAL TRAILER MODAL ═══
+function initTrailerModal() {
+    var modalBox = document.getElementById('trailer-modal');
+    var iframeBox = document.getElementById('trailer-iframe-box');
+    var closeBtn = document.getElementById('btn-close-trailer');
+    if (!modalBox || !iframeBox) return;
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-open-trailer');
+        if (!btn) return;
+        var trailerUrl = btn.getAttribute('data-trailer');
+        if (!trailerUrl) return;
+
+        var embedUrl = trailerUrl;
+        if (trailerUrl.indexOf('youtube.com') !== -1 || trailerUrl.indexOf('youtu.be') !== -1) {
+            var match = trailerUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+            if (match && match[1]) {
+                embedUrl = 'https://www.youtube.com/embed/' + match[1] + '?autoplay=1';
+            }
+        } else if (trailerUrl.length === 11) {
+            embedUrl = 'https://www.youtube.com/embed/' + trailerUrl + '?autoplay=1';
+        }
+
+        iframeBox.innerHTML = '<iframe src="' + embedUrl + '" allow="autoplay; fullscreen" allowfullscreen style="width:100%;height:100%;border:0;"></iframe>';
+        modalBox.style.display = 'flex';
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            modalBox.style.display = 'none';
+            iframeBox.innerHTML = '';
+        });
+    }
+
+    modalBox.addEventListener('click', function(e) {
+        if (e.target === modalBox) {
+            modalBox.style.display = 'none';
+            iframeBox.innerHTML = '';
+        }
+    });
+}
+
+// ═══ REPORT BROKEN PLAYER ═══
+function initReportBrokenPlayer() {
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-report-broken');
+        if (!btn) return;
+        var postId = btn.getAttribute('data-id');
+        var activeTab = document.querySelector('.server-tab.active');
+        var serverName = activeTab ? activeTab.textContent.trim() : 'Server 1';
+
+        if (!confirm('Report broken video player (' + serverName + ') to site moderators?')) return;
+
+        var fd = new FormData();
+        fd.append('action', 'movie_elite_report_broken_link');
+        fd.append('nonce', ME.nonce || '');
+        fd.append('post_id', postId);
+        fd.append('server_name', serverName);
+
+        fetch(AJAX, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
+            .then(function(resp) {
+                alert(resp.data.message || 'Report submitted successfully!');
+                btn.style.background = 'rgba(0,255,136,0.15)';
+                btn.style.color = '#00ff88';
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Reported';
+            });
+    });
+}
+
+// ═══ AIRING SCHEDULE CALENDAR ═══
+function initAiringSchedule() {
+    document.querySelectorAll('.airing-day-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var targetDay = tab.getAttribute('data-day');
+            document.querySelectorAll('.airing-day-tab').forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+
+            document.querySelectorAll('.airing-show-card').forEach(function(card) {
+                var cardDay = card.getAttribute('data-day');
+                card.style.display = (cardDay === targetDay) ? 'flex' : 'none';
+            });
+        });
+    });
+}
+
+// ═══ AUTO NEXT EPISODE & ONE-TAP COPY ═══
+function initEpisodeAndCopyControls() {
+    // Next Episode Button
+    document.addEventListener('click', function(e) {
+        var nextBtn = e.target.closest('.btn-next-episode');
+        if (!nextBtn) return;
+        var activeEp = document.querySelector('.btn-episode-select.active');
+        if (activeEp) {
+            var nextEp = activeEp.nextElementSibling;
+            if (nextEp && nextEp.classList.contains('btn-episode-select')) {
+                nextEp.click();
+            } else {
+                alert('You are already on the latest episode!');
+            }
+        }
+    });
+
+    // Copy Link Button
+    document.addEventListener('click', function(e) {
+        var copyBtn = e.target.closest('.btn-copy-link');
+        if (!copyBtn) return;
+        var url = copyBtn.getAttribute('data-url') || window.location.href;
+        navigator.clipboard.writeText(url).then(function() {
+            var textSpan = copyBtn.querySelector('.copy-text');
+            if (textSpan) {
+                var oldText = textSpan.textContent;
+                textSpan.textContent = 'Copied!';
+                setTimeout(function() { textSpan.textContent = oldText; }, 2000);
+            }
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     initWatchlistButtons();
     initContinueWatching();
@@ -331,6 +515,12 @@ document.addEventListener('DOMContentLoaded', function() {
     initAdvancedFilter();
     initCountdowns();
     renderWatchlistPage();
+    initLiveSearch();
+    initAccentSwitcher();
+    initTrailerModal();
+    initReportBrokenPlayer();
+    initAiringSchedule();
+    initEpisodeAndCopyControls();
 });
 
 })();

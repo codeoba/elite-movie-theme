@@ -311,6 +311,99 @@ add_action('wp_ajax_movie_elite_get_watchlist_cards', 'movie_elite_ajax_watchlis
 add_action('wp_ajax_nopriv_movie_elite_get_watchlist_cards', 'movie_elite_ajax_watchlist_cards_handler');
 
 // ═══════════════════════════════════════════════════════
+// FEATURE: REPORT BROKEN LINK / PLAYER SYSTEM
+// ═══════════════════════════════════════════════════════
+
+function movie_elite_ajax_report_broken_link() {
+    check_ajax_referer('movie_elite_nonce', 'nonce');
+    $post_id    = intval($_POST['post_id'] ?? 0);
+    $server_name= sanitize_text_field($_POST['server_name'] ?? 'Server 1');
+    $note       = sanitize_textarea_field($_POST['note'] ?? 'Player not loading');
+
+    if (!$post_id) {
+        wp_send_json_error(array('message' => 'Invalid Post ID'));
+    }
+
+    $reports = get_post_meta($post_id, '_broken_link_reports', true);
+    if (!is_array($reports)) $reports = array();
+
+    $reports[] = array(
+        'server'    => $server_name,
+        'note'      => $note,
+        'timestamp' => current_time('mysql'),
+        'user_ip'   => $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'
+    );
+
+    update_post_meta($post_id, '_broken_link_reports', $reports);
+    update_post_meta($post_id, '_has_broken_link_report', 'yes');
+
+    wp_send_json_success(array('message' => 'Thank you! The issue has been reported to site moderators.'));
+}
+add_action('wp_ajax_movie_elite_report_broken_link', 'movie_elite_ajax_report_broken_link');
+add_action('wp_ajax_nopriv_movie_elite_report_broken_link', 'movie_elite_ajax_report_broken_link');
+
+// ═══════════════════════════════════════════════════════
+// FEATURE: WEEKLY AIRING SCHEDULE CALENDAR
+// ═══════════════════════════════════════════════════════
+
+function movie_elite_render_airing_schedule() {
+    $days = array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun');
+    $current_day = date('D');
+
+    // Query active TV shows & Asian Dramas
+    $shows = get_posts(array(
+        'post_type'      => 'tvshows',
+        'posts_per_page' => 14,
+        'post_status'    => 'publish',
+        'orderby'        => 'date',
+        'order'          => 'DESC'
+    ));
+
+    ?>
+    <div class="airing-schedule-container">
+        <div class="airing-schedule-header">
+            <h3><i class="fa-solid fa-calendar-week" style="color:var(--accent-cyan);"></i> Weekly Airing Schedule (TV Shows & Dramas)</h3>
+            <span class="schedule-badge"><i class="fa-solid fa-clock"></i> New Episodes Daily</span>
+        </div>
+        <div class="airing-days-tabs">
+            <?php foreach ($days as $idx => $d) : 
+                $active = ($d === substr($current_day, 0, 3)) ? 'active' : '';
+            ?>
+                <button type="button" class="airing-day-tab <?php echo $active; ?>" data-day="<?php echo esc_attr($d); ?>">
+                    <?php echo esc_html($d); ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
+        <div class="airing-shows-list">
+            <?php if (!empty($shows)) : ?>
+                <?php foreach ($shows as $s_idx => $show) : 
+                    $show_id    = $show->ID;
+                    $title      = get_the_title($show_id);
+                    $permalink  = get_permalink($show_id);
+                    $poster     = get_post_meta($show_id, 'poster_url', true) ?: get_the_post_thumbnail_url($show_id, 'thumbnail');
+                    $assigned_day = $days[$s_idx % 7];
+                    if (empty($poster)) $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=150';
+                ?>
+                <div class="airing-show-card" data-day="<?php echo esc_attr($assigned_day); ?>" style="<?php echo ($assigned_day === substr($current_day, 0, 3) || $s_idx < 4) ? '' : 'display:none;'; ?>">
+                    <div class="airing-thumb">
+                        <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" />
+                    </div>
+                    <div class="airing-info">
+                        <span class="airing-day-tag"><?php echo esc_html($assigned_day); ?> Airing</span>
+                        <h4><a href="<?php echo esc_url($permalink); ?>"><?php echo esc_html($title); ?></a></h4>
+                        <span class="airing-time"><i class="fa-solid fa-play-circle"></i> New Episode</span>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <p style="color:var(--text-muted); padding:15px;">No scheduled dramas for today.</p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+}
+
+// ═══════════════════════════════════════════════════════
 // ENQUEUE FEATURES JS + CSS
 // ═══════════════════════════════════════════════════════
 

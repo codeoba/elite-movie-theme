@@ -313,6 +313,9 @@ $hero_query = new WP_Query(array(
         </section>
         <?php endforeach; ?>
 
+        <!-- Weekly Airing Schedule Calendar (For TV Shows & Asian Dramas) -->
+        <?php if (function_exists('movie_elite_render_airing_schedule')) movie_elite_render_airing_schedule(); ?>
+
     </div>
 </main>
 

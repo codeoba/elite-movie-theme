@@ -1233,8 +1233,290 @@ a:hover {
 
 /* Watchlist Heart Button is styled in main cards block */
 
-/* Continue Watching Card */
-.me-cw-card {
+/* ═══════════════════════════════════════════════════════
+   LIVE INSTANT SEARCH DROPDOWN
+   ═══════════════════════════════════════════════════════ */
+
+.live-search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(37, 40, 54, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 212, 255, 0.15);
+  backdrop-filter: blur(25px);
+  z-index: 99999;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.live-results-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.live-search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none !important;
+  transition: var(--transition);
+}
+
+.live-search-item:hover {
+  background: rgba(0, 212, 255, 0.15);
+}
+
+.live-search-item img {
+  width: 42px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.live-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.live-item-type {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+.live-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════════
+   ACCENT COLOR SWITCHER DOTS
+   ═══════════════════════════════════════════════════════ */
+
+.accent-switcher-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+}
+
+.accent-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+.accent-dot:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 12px rgba(255,255,255,0.8);
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL POPUP (TRAILER & DIALOGS)
+   ═══════════════════════════════════════════════════════ */
+
+.me-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.me-modal-box {
+  position: relative;
+  width: 100%;
+  max-width: 850px;
+  background: #252836;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+.me-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.me-modal-close:hover {
+  background: #ff0055;
+  color: #fff;
+  border-color: #ff0055;
+}
+
+/* ═══════════════════════════════════════════════════════
+   WEEKLY AIRING SCHEDULE CALENDAR
+   ═══════════════════════════════════════════════════════ */
+
+.airing-schedule-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  margin-bottom: 40px;
+}
+
+.airing-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.airing-schedule-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.schedule-badge {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--accent-cyan);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--accent-cyan);
+}
+
+.airing-days-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.airing-day-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.airing-day-tab:hover,
+.airing-day-tab.active {
+  background: var(--accent-cyan);
+  color: #000;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+}
+
+.airing-shows-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.airing-show-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  transition: var(--transition);
+}
+
+.airing-show-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--accent-cyan);
+  transform: translateX(4px);
+}
+
+.airing-thumb {
+  width: 48px;
+  height: 68px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.airing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.airing-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.airing-day-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.airing-info h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.airing-info h4 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.airing-time {
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+}
   display: flex;
   gap: 10px;
   background: var(--bg-card);

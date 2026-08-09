@@ -116,6 +116,14 @@ function movie_elite_register_cpts() {
         'rewrite'           => array('slug' => 'country'),
     ));
 
+    register_taxonomy('actor', array('movies', 'tvshows'), array(
+        'hierarchical'      => false,
+        'labels'            => array('name' => 'Actors & Cast', 'singular_name' => 'Actor / Cast'),
+        'show_ui'           => true,
+        'show_admin_column' => true,
+        'rewrite'           => array('slug' => 'actor'),
+    ));
+
     // Ensure core Categories exist
     $default_cats = array(
         'Recommended'   => 'recommended',
@@ -171,6 +179,59 @@ function movie_elite_enqueue_scripts() {
     wp_enqueue_script('movie-elite-features', MOVIE_ELITE_URI . '/js/features.js', array(), MOVIE_ELITE_VERSION, true);
 }
 add_action('wp_enqueue_scripts', 'movie_elite_enqueue_scripts');
+
+/**
+ * AJAX Handler: Live Instant Search
+ */
+function movie_elite_ajax_live_search() {
+    $keyword = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+    if (strlen($keyword) < 2) {
+        wp_send_json_success(array('results' => array()));
+    }
+
+    $args = array(
+        'post_type'      => array('movies', 'tvshows'),
+        'post_status'    => 'publish',
+        'posts_per_page' => 8,
+        's'              => $keyword,
+    );
+
+    $query = new WP_Query($args);
+    $results = array();
+
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            $id = get_the_ID();
+            $poster = get_post_meta($id, 'poster_url', true);
+            if (empty($poster) && has_post_thumbnail()) {
+                $poster = get_the_post_thumbnail_url($id, 'thumbnail');
+            }
+            if (empty($poster)) {
+                $poster = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=150';
+            }
+
+            $type_label = (get_post_type() === 'tvshows') ? 'TV Show' : 'Movie';
+            $rating     = get_post_meta($id, 'imdb_rating', true) ?: '8.5';
+            $year       = get_post_meta($id, 'release_year', true) ?: '2026';
+
+            $results[] = array(
+                'id'        => $id,
+                'title'     => get_the_title(),
+                'permalink' => get_permalink(),
+                'poster'    => esc_url($poster),
+                'type'      => $type_label,
+                'rating'    => $rating,
+                'year'      => $year,
+            );
+        }
+        wp_reset_postdata();
+    }
+
+    wp_send_json_success(array('results' => $results));
+}
+add_action('wp_ajax_movie_elite_live_search', 'movie_elite_ajax_live_search');
+add_action('wp_ajax_nopriv_movie_elite_live_search', 'movie_elite_ajax_live_search');
 
 /**
  * Render Card Component Helper

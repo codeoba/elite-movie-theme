@@ -179,6 +179,19 @@ while (have_posts()) : the_post();
                         <i class="fa-solid fa-heart"></i> Watchlist
                     </button>
 
+                    <?php 
+                    $trailer_url = get_post_meta($post_id, 'trailer_url', true);
+                    if (!empty($trailer_url)) : 
+                    ?>
+                    <button type="button" class="btn-open-trailer alphabet-btn" data-trailer="<?php echo esc_attr($trailer_url); ?>" style="background:rgba(156,39,176,0.2); color:#e040fb; border:1px solid #e040fb;">
+                        <i class="fa-solid fa-film"></i> Watch Trailer
+                    </button>
+                    <?php endif; ?>
+
+                    <button type="button" class="btn-report-broken alphabet-btn" data-id="<?php echo $post_id; ?>" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid #ef4444;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Report Player
+                    </button>
+
                     <button type="button" id="btn-toggle-lights" class="alphabet-btn" style="background:rgba(255,183,3,0.15); color:var(--accent-gold); border:1px solid var(--accent-gold);">
                         <i class="fa-solid fa-lightbulb"></i> <span id="lights-btn-text">Lights Off</span>
                     </button>
@@ -231,9 +244,46 @@ while (have_posts()) : the_post();
                     <span><i class="fa-solid fa-video" style="color:var(--accent-green);"></i> Quality: <?php echo esc_html($quality); ?></span>
                 </div>
 
+                <!-- Storyline & Cast -->
                 <h3 style="color:#fff; font-size:1.15rem; margin-bottom:10px;">Storyline / Overview</h3>
                 <div style="background:var(--bg-card); padding:18px; border-radius:var(--radius-md); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.92rem; line-height:1.7; margin-bottom:20px;">
                     <?php the_content(); ?>
+                </div>
+
+                <!-- Cast / Actors List Section -->
+                <?php
+                $actors = get_the_terms($post_id, 'actor');
+                if (!empty($actors) && !is_wp_error($actors)) :
+                ?>
+                <div style="margin-bottom:24px; background:var(--bg-card); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                    <h4 style="color:var(--accent-cyan); font-size:0.95rem; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:0.5px;"><i class="fa-solid fa-users"></i> Starring Cast & Actors</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <?php foreach ($actors as $act) : ?>
+                        <a href="<?php echo esc_url(get_term_link($act)); ?>" class="dropdown-item" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); padding:6px 12px; border-radius:20px; text-decoration:none; color:#fff; font-size:0.85rem; border:1px solid var(--border-color);">
+                            <i class="fa-solid fa-user-ninja" style="color:var(--accent-cyan);"></i> <?php echo esc_html($act->name); ?>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- One-Tap Social Share Bar -->
+                <div style="margin-bottom:28px; background:rgba(255,255,255,0.03); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                    <h4 style="color:#fff; font-size:0.95rem; margin:0 0 12px 0;"><i class="fa-solid fa-share-nodes" style="color:var(--accent-cyan);"></i> Share This Movie With Friends</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <a href="https://api.whatsapp.com/send?text=<?php echo urlencode($title . ' - Watch Now: ' . get_permalink()); ?>" target="_blank" rel="noopener" style="background:#25D366; color:#fff; padding:7px 15px; border-radius:6px; font-weight:700; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </a>
+                        <a href="https://t.me/share/url?url=<?php echo urlencode(get_permalink()); ?>&text=<?php echo urlencode($title); ?>" target="_blank" rel="noopener" style="background:#0088cc; color:#fff; padding:7px 15px; border-radius:6px; font-weight:700; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-brands fa-telegram"></i> Telegram
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode(get_permalink()); ?>" target="_blank" rel="noopener" style="background:#1877f2; color:#fff; padding:7px 15px; border-radius:6px; font-weight:700; font-size:0.82rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-brands fa-facebook"></i> Facebook
+                        </a>
+                        <button type="button" class="btn-copy-link" data-url="<?php echo esc_url(get_permalink()); ?>" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border-color); padding:7px 15px; border-radius:6px; font-weight:700; font-size:0.82rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-link"></i> <span class="copy-text">Copy Link</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Download Links Section -->
@@ -285,6 +335,15 @@ while (have_posts()) : the_post();
 
     </div>
 </main>
+
+<!-- Trailer Modal Container -->
+<div id="trailer-modal" class="me-modal-overlay" style="display:none;">
+    <div class="me-modal-box">
+        <button type="button" id="btn-close-trailer" class="me-modal-close">&times;</button>
+        <h3 style="color:#fff; margin:0 0 15px 0;"><i class="fa-solid fa-film" style="color:var(--accent-cyan);"></i> Official Trailer</h3>
+        <div class="iframe-player-wrapper" id="trailer-iframe-box"></div>
+    </div>
+</div>
 
 <?php
 endwhile;
