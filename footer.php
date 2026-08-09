@@ -49,8 +49,16 @@
             </div>
         </div>
 
-        <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> MovieElite Pro Theme. All rights reserved. Designed for Elite Streaming Experience.</p>
+        <div class="footer-bottom" style="text-align:center; padding-top:20px; border-top:1px solid var(--border-color);">
+            <p style="margin:0 0 8px 0; color:#fff; font-size:0.92rem; font-weight:700;">
+                &copy; <?php echo date('Y'); ?> MovieElite Pro. Created By <span style="background:linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900;">CodeOba</span>
+            </p>
+            <div style="display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap; color:var(--text-muted); font-size:0.83rem; margin-top:8px;">
+                <span><i class="fa-solid fa-user" style="color:var(--accent-cyan);"></i> Mohamed Nurdin Mgaza</span>
+                <span><i class="fa-solid fa-envelope" style="color:var(--accent-gold);"></i> <a href="mailto:codeoba@gmail.com" style="color:var(--text-muted); text-decoration:none;">codeoba@gmail.com</a></span>
+                <span><i class="fa-solid fa-phone" style="color:var(--accent-green);"></i> <a href="tel:+255687001775" style="color:var(--text-muted); text-decoration:none;">+255687001775</a></span>
+                <span><i class="fa-solid fa-location-dot" style="color:var(--accent-magenta);"></i> Tanzania, Dar es Salaam</span>
+            </div>
         </div>
     </div>
 </footer>
