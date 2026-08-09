@@ -517,3 +517,67 @@ function movie_elite_clean_display_title($title, $id = 0) {
     return $title;
 }
 add_filter('the_title', 'movie_elite_clean_display_title', 10, 2);
+
+/**
+ * Smart AI Recommendation Engine: Query related titles by shared Taxonomies (Genre, Country, Actor)
+ */
+function movie_elite_get_related_titles($post_id, $limit = 6) {
+    $genres    = wp_get_post_terms($post_id, 'genre', array('fields' => 'ids'));
+    $countries = wp_get_post_terms($post_id, 'country', array('fields' => 'ids'));
+    $actors    = wp_get_post_terms($post_id, 'actor', array('fields' => 'ids'));
+
+    $tax_query = array('relation' => 'OR');
+    if (!empty($genres) && !is_wp_error($genres)) {
+        $tax_query[] = array('taxonomy' => 'genre', 'field' => 'term_id', 'terms' => $genres);
+    }
+    if (!empty($countries) && !is_wp_error($countries)) {
+        $tax_query[] = array('taxonomy' => 'country', 'field' => 'term_id', 'terms' => $countries);
+    }
+    if (!empty($actors) && !is_wp_error($actors)) {
+        $tax_query[] = array('taxonomy' => 'actor', 'field' => 'term_id', 'terms' => $actors);
+    }
+
+    $args = array(
+        'post_type'      => array('movies', 'tvshows'),
+        'post_status'    => 'publish',
+        'post__not_in'   => array($post_id),
+        'posts_per_page' => $limit,
+        'orderby'        => 'rand',
+    );
+
+    if (count($tax_query) > 1) {
+        $args['tax_query'] = $tax_query;
+    }
+
+    return new WP_Query($args);
+}
+
+/**
+ * Get clickable Actor Links for single movie & drama pages
+ */
+function movie_elite_get_actor_links($post_id) {
+    $actors = get_the_terms($post_id, 'actor');
+    if (empty($actors) || is_wp_error($actors)) {
+        $raw_cast = get_post_meta($post_id, 'movie_cast', true);
+        if (empty($raw_cast)) return 'N/A';
+        $cast_array = explode(',', $raw_cast);
+        $links = array();
+        foreach ($cast_array as $c) {
+            $c_name = trim($c);
+            if (!empty($c_name)) {
+                $term = get_term_by('name', $c_name, 'actor');
+                if ($term) {
+                    $links[] = '<a href="' . esc_url(get_term_link($term)) . '" style="color:var(--accent-cyan); text-decoration:none; font-weight:700;">' . esc_html($c_name) . '</a>';
+                } else {
+                    $links[] = esc_html($c_name);
+                }
+            }
+        }
+        return implode(', ', $links);
+    }
+    $links = array();
+    foreach ($actors as $act) {
+        $links[] = '<a href="' . esc_url(get_term_link($act)) . '" style="color:var(--accent-cyan); text-decoration:none; font-weight:700;">' . esc_html($act->name) . '</a>';
+    }
+    return implode(', ', $links);
+}

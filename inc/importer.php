@@ -517,6 +517,7 @@ function movie_elite_ajax_import_handler() {
     ));
 
     if ($post_id && !is_wp_error($post_id)) {
+        // Save Meta fields
         update_post_meta($post_id, 'imdb_id', $imdb_id);
         update_post_meta($post_id, 'tmdb_id', $tmdb_id);
         update_post_meta($post_id, 'imdb_rating', $rating);
@@ -533,9 +534,53 @@ function movie_elite_ajax_import_handler() {
             wp_set_object_terms($post_id, $genre_names, 'genre');
         }
 
-        // Assign category
+        // Assign Cast to actor taxonomy
+        if (!empty($m['credits']['cast'])) {
+            $cast_names = array();
+            $cast_limit = 0;
+            foreach ($m['credits']['cast'] as $cast_member) {
+                if (!empty($cast_member['name'])) {
+                    $cast_names[] = sanitize_text_field($cast_member['name']);
+                    $cast_limit++;
+                    if ($cast_limit >= 10) break;
+                }
+            }
+            if (!empty($cast_names)) {
+                wp_set_object_terms($post_id, $cast_names, 'actor', true);
+                update_post_meta($post_id, 'movie_cast', implode(', ', $cast_names));
+            }
+        }
+
+        // Assign Category & Build Western TV Show Season/Episode Multi-Server Players
         if ($import_type === 'tv') {
             wp_set_object_terms($post_id, 'tv-shows', 'movie_category');
+
+            // Build TV Show Season & Episode multi-server embed data
+            $tv_episodes_data = array();
+            $total_seasons = max(1, $seasons);
+            $total_episodes_count = 0;
+
+            for ($s = 1; $s <= min($total_seasons, 10); $s++) {
+                $eps_in_season = ($s === 1) ? min(30, max(1, $episodes)) : 12;
+                for ($e = 1; $e <= $eps_in_season; $e++) {
+                    $total_episodes_count++;
+                    $target_id = !empty($imdb_id) ? $imdb_id : $tmdb_id;
+                    $servers = array(
+                        array('name' => 'Server 1 (AutoEmbed)', 'url' => "https://autoembed.cc/embed/tv/{$target_id}/{$s}/{$e}"),
+                        array('name' => 'Server 2 (VidSrc PRO)', 'url' => "https://vidsrc.to/embed/tv/{$target_id}/{$s}/{$e}"),
+                        array('name' => 'Server 3 (VidSrc ME)',  'url' => "https://vidsrc.me/embed/tv/{$target_id}/{$s}/{$e}"),
+                        array('name' => 'Server 4 (SuperEmbed)', 'url' => "https://multiembed.mov/directstream.php?video_id={$target_id}&s={$s}&e={$e}")
+                    );
+                    $tv_episodes_data["s{$s}_e{$e}"] = array(
+                        'season'  => $s,
+                        'episode' => $e,
+                        'title'   => "S{$s} E{$e}",
+                        'servers' => $servers
+                    );
+                }
+            }
+            update_post_meta($post_id, 'dramacool_episodes_data', $tv_episodes_data);
+            update_post_meta($post_id, 'total_episodes', max($episodes, $total_episodes_count));
         }
 
         // Apply Multi-Source Embed Generator & Draft Guard

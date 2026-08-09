@@ -310,17 +310,15 @@ while (have_posts()) : the_post();
                     <?php if (function_exists('movie_elite_render_ratings_reviews')) movie_elite_render_ratings_reviews($post_id); ?>
                 </div>
 
-                <!-- Related Movies -->
-                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px;">You May Also Like</h3>
+                <!-- Smart AI Recommendations -->
+                <h3 style="color:#fff; font-size:1.2rem; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--accent-cyan);"></i> You May Also Like (AI Recommendations)
+                </h3>
                 <div class="movies-grid">
                     <?php
-                    $related_query = new WP_Query(array(
-                        'post_type'      => 'movies',
-                        'post_status'    => 'publish',
-                        'posts_per_page' => 4,
-                        'post__not_in'   => array($post_id),
-                        'orderby'        => 'rand'
-                    ));
+                    $related_query = function_exists('movie_elite_get_related_titles')
+                        ? movie_elite_get_related_titles($post_id, 6)
+                        : new WP_Query(array('post_type' => array('movies', 'tvshows'), 'post_status' => 'publish', 'posts_per_page' => 6, 'post__not_in' => array($post_id), 'orderby' => 'rand'));
 
                     if ($related_query->have_posts()) :
                         while ($related_query->have_posts()) : $related_query->the_post();

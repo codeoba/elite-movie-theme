@@ -37,8 +37,7 @@ $hero_query = new WP_Query(array(
                             $backdrop = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200&auto=format&fit=crop&q=80';
                         }
 
-                        $genres = get_the_terms($post_id, 'genre');
-                        $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Trending');
+                        $trailer_url = get_post_meta($post_id, 'youtube_trailer_id', true) ?: get_post_meta($post_id, 'trailer_url', true);
                 ?>
                 <div class="slide-item <?php echo ($slide_index === 1) ? 'active' : ''; ?>" style="background-image: url('<?php echo esc_url($backdrop); ?>');">
                     <div class="slide-overlay"></div>
@@ -50,9 +49,16 @@ $hero_query = new WP_Query(array(
                             <span><i class="fa-solid fa-calendar-days"></i> <?php echo esc_html($year); ?></span>
                             <span><i class="fa-solid fa-video"></i> <?php echo esc_html($quality); ?></span>
                         </div>
-                        <a href="<?php the_permalink(); ?>" class="btn-watch-slide">
-                            <i class="fa-solid fa-play"></i> Watch Now
-                        </a>
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:15px;">
+                            <a href="<?php the_permalink(); ?>" class="btn-watch-slide">
+                                <i class="fa-solid fa-play"></i> Watch Now
+                            </a>
+                            <?php if (!empty($trailer_url)) : ?>
+                            <button type="button" class="btn-watch-slide btn-open-trailer" data-trailer="<?php echo esc_attr($trailer_url); ?>" style="background:rgba(255,255,255,0.12); color:#fff; border:1px solid var(--border-color); box-shadow:none;">
+                                <i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Watch Trailer
+                            </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
                 <?php
