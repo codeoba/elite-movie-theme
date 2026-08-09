@@ -334,6 +334,8 @@ function movie_elite_render_card_item() {
 
     $genres = get_the_terms($post_id, 'genre');
     $genre_text = (!empty($genres) && !is_wp_error($genres)) ? $genres[0]->name : 'Cinema';
+    $drama_status   = get_post_meta($post_id, '_drama_status', true);
+    $drama_subtitle = get_post_meta($post_id, '_drama_subtitle', true);
     ?>
     <div class="movie-card" data-title="<?php echo esc_attr($title); ?>">
         <div class="card-poster">
@@ -341,6 +343,16 @@ function movie_elite_render_card_item() {
                 <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" />
                 <span class="card-imdb-score"><i class="fa-solid fa-star"></i> <?php echo esc_html($rating); ?></span>
                 <span class="card-quality-badge"><?php echo esc_html($quality); ?></span>
+                <?php if (!empty($drama_status)) : ?>
+                    <?php if (strcasecmp($drama_status, 'ongoing') === 0) : ?>
+                        <span class="card-status-badge ongoing"><i class="fa-solid fa-spinner fa-spin-pulse"></i> ONGOING</span>
+                    <?php else : ?>
+                        <span class="card-status-badge completed"><i class="fa-solid fa-circle-check"></i> COMPLETED</span>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!empty($drama_subtitle) || get_post_type($post_id) === 'tvshows') : ?>
+                    <span class="card-sub-badge"><i class="fa-solid fa-closed-captioning"></i> <?php echo esc_html($drama_subtitle ?: 'SUB'); ?></span>
+                <?php endif; ?>
                 <div class="card-play-overlay">
                     <div class="play-circle-btn"><i class="fa-solid fa-play"></i></div>
                 </div>
