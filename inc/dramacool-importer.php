@@ -7,7 +7,8 @@
  * 2. Live Catalog Scraper (Displays 20 Dramas per page with full Pagination).
  * 3. Status & Subtitle Detection (ONGOING / COMPLETED & SUB Badges).
  * 4. Manual & Bulk Import Workflows (Select Individual, Import Selected, or Bulk Import All 20).
- * 5. Multi-Server Episode Video Player Generator (Megaplay, Megavid, KissAsian).
+ * 5. Ongoing Drama Monitor & Episode Auto-Sync Engine (Detects new uploaded episodes & syncs players).
+ * 6. Multi-Server Episode Video Player Generator (Megaplay, Megavid, KissAsian).
  */
 
 if (!defined('ABSPATH')) {
@@ -474,6 +475,7 @@ function movie_elite_insert_dramacool_post($scraped_data) {
     update_post_meta($post_id, 'movie_quality', '4K UHD');
     update_post_meta($post_id, 'imdb_rating', '8.8');
     update_post_meta($post_id, 'dramacool_episodes_data', $episodes);
+    update_post_meta($post_id, 'dramacool_source_url', esc_url_raw($scraped_data['source_url'] ?? ''));
 
     // Assign Taxonomies
     if (!empty($genres)) {
@@ -492,6 +494,131 @@ function movie_elite_insert_dramacool_post($scraped_data) {
         'sub'        => $subtitle,
         'permalink'  => get_permalink($post_id)
     );
+}
+
+// ═══════════════════════════════════════════════════════
+// ONGOING DRAMA MONITOR ENGINE
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Get list of all Ongoing Dramas stored in WordPress library
+ */
+function movie_elite_get_ongoing_dramas_list() {
+    $args = array(
+        'post_type'      => 'tvshows',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'meta_query'     => array(
+            array(
+                'key'     => '_drama_status',
+                'value'   => 'Ongoing',
+                'compare' => '='
+            )
+        )
+    );
+
+    $query = new WP_Query($args);
+    $dramas = array();
+
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            $id = get_the_ID();
+            $source_url = get_post_meta($id, 'dramacool_source_url', true);
+            $total_eps  = intval(get_post_meta($id, 'total_episodes', true) ?: 1);
+            $poster     = get_post_meta($id, 'poster_url', true);
+
+            $dramas[] = array(
+                'post_id'    => $id,
+                'title'      => get_the_title(),
+                'poster'     => $poster,
+                'source_url' => $source_url,
+                'total_eps'  => $total_eps,
+                'permalink'  => get_permalink($id)
+            );
+        }
+        wp_reset_postdata();
+    }
+
+    return $dramas;
+}
+
+/**
+ * Check single ongoing drama against DramaCool for new episode uploads
+ */
+function movie_elite_check_ongoing_drama_update($post_id) {
+    $post_id = intval($post_id);
+    if (!$post_id) return false;
+
+    $title      = get_the_title($post_id);
+    $local_eps  = intval(get_post_meta($post_id, 'total_episodes', true) ?: 1);
+    $source_url = get_post_meta($post_id, 'dramacool_source_url', true);
+
+    if (empty($source_url)) {
+        $domain = movie_elite_get_dramacool_domain();
+        $source_url = $domain . '/search?keyword=' . urlencode($title);
+    }
+
+    $scraped_data = movie_elite_scrape_dramacool_drama($source_url);
+    if (is_wp_error($scraped_data)) {
+        return array(
+            'post_id'       => $post_id,
+            'title'         => $title,
+            'local_eps'     => $local_eps,
+            'remote_eps'    => $local_eps,
+            'error'         => $scraped_data->get_error_message(),
+            'has_new'       => false,
+            'new_eps_count' => 0
+        );
+    }
+
+    $remote_eps = intval($scraped_data['total_eps']);
+    $has_new    = ($remote_eps > $local_eps);
+    $diff       = max(0, $remote_eps - $local_eps);
+
+    return array(
+        'post_id'       => $post_id,
+        'title'         => $title,
+        'local_eps'     => $local_eps,
+        'remote_eps'    => $remote_eps,
+        'has_new'       => $has_new,
+        'new_eps_count' => $diff,
+        'remote_status' => $scraped_data['status'],
+        'source_url'    => $scraped_data['source_url']
+    );
+}
+
+/**
+ * Sync single ongoing drama with new episodes from DramaCool
+ */
+function movie_elite_sync_ongoing_drama($post_id) {
+    $post_id = intval($post_id);
+    if (!$post_id) return new WP_Error('invalid_id', 'Invalid Post ID');
+
+    $source_url = get_post_meta($post_id, 'dramacool_source_url', true);
+    if (empty($source_url)) {
+        $title = get_the_title($post_id);
+        $domain = movie_elite_get_dramacool_domain();
+        $source_url = $domain . '/search?keyword=' . urlencode($title);
+    }
+
+    $scraped_data = movie_elite_scrape_dramacool_drama($source_url);
+    if (is_wp_error($scraped_data)) {
+        return $scraped_data;
+    }
+
+    $result = movie_elite_insert_dramacool_post($scraped_data);
+    if (is_wp_error($result)) {
+        return $result;
+    }
+
+    // Update post date so updated drama shows at top of homepage & section blocks
+    wp_update_post(array(
+        'ID'        => $post_id,
+        'post_date' => current_time('mysql')
+    ));
+
+    return $result;
 }
 
 /**
@@ -545,6 +672,64 @@ function movie_elite_ajax_import_dramacool() {
 add_action('wp_ajax_movie_elite_import_dramacool', 'movie_elite_ajax_import_dramacool');
 
 /**
+ * AJAX Handler: Scan Ongoing Dramas for New Episode Updates
+ */
+function movie_elite_ajax_scan_ongoing_updates() {
+    check_ajax_referer('movie_elite_dramacool_nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized user permissions.'));
+    }
+
+    $ongoing_dramas = movie_elite_get_ongoing_dramas_list();
+    $results = array();
+    $total_updates_found = 0;
+
+    foreach ($ongoing_dramas as $drama) {
+        $check = movie_elite_check_ongoing_drama_update($drama['post_id']);
+        if (!empty($check['has_new'])) {
+            $total_updates_found++;
+        }
+        $results[] = array_merge($drama, $check);
+    }
+
+    wp_send_json_success(array(
+        'ongoing_count'       => count($ongoing_dramas),
+        'total_updates_found' => $total_updates_found,
+        'dramas'              => $results
+    ));
+}
+add_action('wp_ajax_movie_elite_scan_ongoing_updates', 'movie_elite_ajax_scan_ongoing_updates');
+
+/**
+ * AJAX Handler: Sync Single Ongoing Drama
+ */
+function movie_elite_ajax_sync_ongoing_drama() {
+    check_ajax_referer('movie_elite_dramacool_nonce', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(array('message' => 'Unauthorized user permissions.'));
+    }
+
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    if (!$post_id) {
+        wp_send_json_error(array('message' => 'Invalid Post ID.'));
+    }
+
+    $result = movie_elite_sync_ongoing_drama($post_id);
+    if (is_wp_error($result)) {
+        wp_send_json_error(array('message' => $result->get_error_message()));
+    }
+
+    wp_send_json_success(array(
+        'message'   => "Successfully updated: {$result['title']} to {$result['total_eps']} Episodes (Status: {$result['status']})!",
+        'post_id'   => $result['post_id'],
+        'total_eps' => $result['total_eps'],
+        'status'    => $result['status'],
+        'permalink' => $result['permalink']
+    ));
+}
+add_action('wp_ajax_movie_elite_sync_ongoing_drama', 'movie_elite_ajax_sync_ongoing_drama');
+
+/**
  * Render Asian Drama Admin Importer & Catalog Browser Page
  */
 function movie_elite_dramacool_importer_page_render() {
@@ -561,9 +746,9 @@ function movie_elite_dramacool_importer_page_render() {
 <div class="wrap" style="max-width:1400px;">
     <h1 style="display:flex; align-items:center; gap:12px; font-size:1.8rem; margin-bottom:10px;">
         <span class="dashicons dashicons-video-alt3" style="font-size:36px; color:#ff0055; width:36px; height:36px;"></span>
-        Asian Drama Importer & Live DramaCool Catalog Browser
+        Asian Drama Importer, Catalog Scraper & Ongoing Monitor Engine
     </h1>
-    <p style="font-size:0.95rem; color:#64748b;">Browse live Asian Dramas (20 per page), filter Ongoing vs Completed, and perform Manual or Bulk imports into WordPress!</p>
+    <p style="font-size:0.95rem; color:#64748b;">Browse live Asian Dramas (20 per page), track Ongoing drama updates, and auto-sync new episodes into WordPress!</p>
     <hr style="margin-bottom:20px; border-color:#cbd5e1;" />
 
     <!-- DramaCool Domain Config Bar -->
@@ -586,12 +771,15 @@ function movie_elite_dramacool_importer_page_render() {
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px;">
             
             <!-- Filter Tabs -->
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button type="button" class="button dc-tab-btn button-primary" data-tab="all">
                     <span class="dashicons dashicons-format-video"></span> All Dramas
                 </button>
                 <button type="button" class="button dc-tab-btn" data-tab="popular">
                     <span class="dashicons dashicons-star-filled" style="color:#f59e0b;"></span> Most Popular
+                </button>
+                <button type="button" class="button dc-tab-btn" data-tab="ongoing" style="background:#047857; color:#fff; border-color:#047857; font-weight:bold;">
+                    <span class="dashicons dashicons-rss" style="color:#6ee7b7;"></span> 🔔 Ongoing Drama Monitor (<span id="dc-ongoing-count">...</span>)
                 </button>
             </div>
 
@@ -614,8 +802,8 @@ function movie_elite_dramacool_importer_page_render() {
         </div>
     </div>
 
-    <!-- Bulk Action Toolbar -->
-    <div style="background:#1e293b; color:#fff; border-radius:10px; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px;">
+    <!-- Bulk Action Toolbar (For Catalog View) -->
+    <div id="dc-bulk-toolbar" style="background:#1e293b; color:#fff; border-radius:10px; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px;">
         <div style="display:flex; align-items:center; gap:15px;">
             <label style="font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; color:#f8fafc;">
                 <input type="checkbox" id="dc-select-all" style="width:18px; height:18px;" />
@@ -635,10 +823,27 @@ function movie_elite_dramacool_importer_page_render() {
         </div>
     </div>
 
+    <!-- Ongoing Dramas Action Toolbar (For Ongoing Monitor View) -->
+    <div id="dc-ongoing-toolbar" style="display:none; background:#064e3b; color:#fff; border-radius:10px; padding:15px 20px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span class="dashicons dashicons-update spin" style="color:#6ee7b7; font-size:22px;"></span>
+            <strong style="font-size:1rem; color:#ecfdf5;">Ongoing Drama Live Monitor:</strong>
+            <span id="dc-ongoing-alert-badge" style="background:#f59e0b; color:#000; font-weight:900; font-size:0.8rem; padding:3px 10px; border-radius:20px;">Scanning...</span>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button type="button" id="btn-rescan-ongoing" class="button button-secondary">
+                🔍 Scan Updates Now
+            </button>
+            <button type="button" id="btn-sync-all-ongoing" class="button button-primary" style="background:#10b981; border-color:#10b981; font-weight:bold;">
+                ⚡ Sync All Updated Dramas
+            </button>
+        </div>
+    </div>
+
     <!-- Live Catalog Grid Display (20 per page) -->
     <div id="dc-catalog-loading" style="display:none; text-align:center; padding:60px; background:#fff; border-radius:12px; border:1px solid #e2e8f0;">
         <span class="dashicons dashicons-update spin" style="font-size:40px; width:40px; height:40px; color:#0284c7;"></span>
-        <h3 style="margin-top:15px; color:#1e293b;">Fetching live Asian Dramas from DramaCool...</h3>
+        <h3 style="margin-top:15px; color:#1e293b;" id="dc-loading-text">Fetching live Asian Dramas from DramaCool...</h3>
     </div>
 
     <div id="dc-catalog-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:20px; margin-bottom:30px;">
@@ -657,12 +862,12 @@ function movie_elite_dramacool_importer_page_render() {
     </div>
 </div>
 
-<!-- Bulk Import Modal Overlay -->
+<!-- Bulk Import / Sync Modal Overlay -->
 <div id="dc-bulk-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
     <div style="background:#fff; border-radius:16px; width:100%; max-width:650px; padding:30px; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
         <h3 style="margin-top:0; color:#0f172a; font-size:1.4rem; display:flex; align-items:center; gap:10px;">
             <span class="dashicons dashicons-update spin" style="color:#0284c7;"></span>
-            Bulk Importing Asian Dramas...
+            <span id="dc-modal-title">Bulk Importing Asian Dramas...</span>
         </h3>
 
         <!-- Progress Bar -->
@@ -676,7 +881,7 @@ function movie_elite_dramacool_importer_page_render() {
 
         <!-- Log Box -->
         <div id="dc-modal-logs" style="max-height:220px; overflow-y:auto; background:#0f172a; color:#38bdf8; font-family:monospace; padding:15px; border-radius:8px; font-size:0.85rem; line-height:1.5;">
-            Ready to import...
+            Ready to process...
         </div>
 
         <div style="margin-top:20px; text-align:right;">
@@ -696,6 +901,7 @@ function movie_elite_dramacool_importer_page_render() {
 .dc-card-status { position:absolute; top:10px; right:10px; z-index:5; font-size:0.7rem; font-weight:bold; padding:3px 8px; border-radius:4px; text-transform:uppercase; }
 .dc-card-status.ongoing { background:#10b981; color:#000; }
 .dc-card-status.completed { background:#3b82f6; color:#fff; }
+.dc-card-status.update-needed { background:#f59e0b; color:#000; box-shadow:0 0 10px rgba(245,158,11,0.6); }
 .dc-card-sub { position:absolute; bottom:10px; left:10px; z-index:5; background:#f59e0b; color:#000; font-size:0.65rem; font-weight:bold; padding:2px 6px; border-radius:4px; }
 .dc-card-body { padding:14px; display:flex; flex-direction:column; flex:1; justify-content:space-between; }
 .dc-card-title { font-weight:bold; font-size:0.95rem; margin:0 0 10px 0; color:#0f172a; line-height:1.3; }
@@ -709,13 +915,23 @@ jQuery(document).ready(function($) {
     var currentSearch = '';
     var totalPages  = 1;
     var pageItems   = [];
+    var ongoingDramasData = [];
 
     function fetchCatalog(page, tab, search) {
         currentPage = page || 1;
         currentTab  = tab  || 'all';
         currentSearch = search || '';
 
+        if (currentTab === 'ongoing') {
+            fetchOngoingDramas();
+            return;
+        }
+
+        $('#dc-ongoing-toolbar').hide();
+        $('#dc-bulk-toolbar').show();
+        $('#dc-pagination-bar').show();
         $('#dc-catalog-grid').hide();
+        $('#dc-loading-text').text('Fetching live Asian Dramas from DramaCool...');
         $('#dc-catalog-loading').show();
         $('#dc-select-all').prop('checked', false);
 
@@ -775,6 +991,77 @@ jQuery(document).ready(function($) {
         updateSelectedCount();
     }
 
+    function fetchOngoingDramas() {
+        $('#dc-bulk-toolbar').hide();
+        $('#dc-pagination-bar').hide();
+        $('#dc-ongoing-toolbar').css('display', 'flex');
+        $('#dc-catalog-grid').hide();
+        $('#dc-loading-text').text('Scanning Ongoing Dramas in library & checking DramaCool for new episodes...');
+        $('#dc-catalog-loading').show();
+
+        $.post(ajaxurl, {
+            action: 'movie_elite_scan_ongoing_updates',
+            nonce: nonce
+        }, function(resp) {
+            $('#dc-catalog-loading').hide();
+            $('#dc-catalog-grid').show();
+
+            if (resp.success && resp.data.dramas) {
+                ongoingDramasData = resp.data.dramas;
+                $('#dc-ongoing-count').text(resp.data.ongoing_count || 0);
+
+                if (resp.data.total_updates_found > 0) {
+                    $('#dc-ongoing-alert-badge').css({'background':'#f59e0b','color':'#000'}).text('🔔 ' + resp.data.total_updates_found + ' Dramas Have New Episodes!');
+                } else {
+                    $('#dc-ongoing-alert-badge').css({'background':'#10b981','color':'#fff'}).text('✓ All Ongoing Dramas Up-to-Date');
+                }
+
+                renderOngoingGrid(ongoingDramasData);
+            } else {
+                $('#dc-catalog-grid').html('<div style="grid-column:1/-1; padding:40px; text-align:center; color:#64748b; background:#fff; border-radius:10px;">No Ongoing Dramas currently stored in library. Import some Ongoing Asian Dramas to track updates!</div>');
+            }
+        }).fail(function() {
+            $('#dc-catalog-loading').hide();
+            $('#dc-catalog-grid').show().html('<div style="grid-column:1/-1; padding:40px; text-align:center; color:#ef4444; background:#fff; border-radius:10px;">Failed to scan Ongoing Dramas updates.</div>');
+        });
+    }
+
+    function renderOngoingGrid(dramas) {
+        if (!dramas || dramas.length === 0) {
+            $('#dc-catalog-grid').html('<div style="grid-column:1/-1; padding:40px; text-align:center; color:#64748b; background:#fff; border-radius:10px;">No Ongoing Dramas found in library.</div>');
+            return;
+        }
+
+        var html = '';
+        dramas.forEach(function(item) {
+            var badge = item.has_new
+                ? '<span class="dc-card-status update-needed">⚡ +' + item.new_eps_count + ' NEW EPS</span>'
+                : '<span class="dc-card-status ongoing">ONGOING</span>';
+
+            var epInfo = item.has_new
+                ? '<div style="margin-bottom:8px; background:#fff7ed; border:1px solid #fdba74; padding:6px 10px; border-radius:6px;"><span style="color:#c2410c; font-weight:bold; font-size:0.8rem;">Local: ' + item.local_eps + ' Eps ➔ DramaCool: ' + item.remote_eps + ' Eps</span></div>'
+                : '<div style="margin-bottom:8px; background:#f0fdf4; border:1px solid #86efac; padding:6px 10px; border-radius:6px;"><span style="color:#15803d; font-size:0.8rem;">Up to date (' + item.local_eps + ' Episodes) ✓</span></div>';
+
+            var btnClass = item.has_new ? 'background:#f59e0b; border-color:#d97706; color:#000; font-weight:bold;' : 'background:#0284c7; border-color:#0284c7; font-weight:bold;';
+            var btnLabel = item.has_new ? '⚡ Sync New Episodes' : '🔄 Refresh Players';
+
+            html += '<div class="dc-card">';
+            html += '  <div class="dc-card-poster">';
+            html +=      badge;
+            html += '    <span class="dc-card-sub">SUB</span>';
+            html += '    <img src="' + (item.poster || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400') + '" alt="' + item.title + '" />';
+            html += '  </div>';
+            html += '  <div class="dc-card-body">';
+            html += '    <h4 class="dc-card-title">' + item.title + '</h4>';
+            html +=      epInfo;
+            html += '    <button type="button" class="button button-primary btn-sync-ongoing" data-id="' + item.post_id + '" style="width:100%; ' + btnClass + '">' + btnLabel + '</button>';
+            html += '  </div>';
+            html += '</div>';
+        });
+
+        $('#dc-catalog-grid').html(html);
+    }
+
     function updatePaginationControls() {
         $('#dc-page-info').text('Page ' + currentPage + ' of ' + totalPages);
         $('#dc-prev-page').prop('disabled', currentPage <= 1);
@@ -797,7 +1084,7 @@ jQuery(document).ready(function($) {
     });
 
     $('.dc-tab-btn').on('click', function() {
-        $('.dc-tab-btn').removeClass('button-primary');
+        $('.dc-tab-btn').removeClass('button-primary').css({'background':'','border-color':''});
         $(this).addClass('button-primary');
         var tab = $(this).data('tab');
         fetchCatalog(1, tab, '');
@@ -844,6 +1131,94 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Single Ongoing Sync Click
+    $(document).on('click', '.btn-sync-ongoing', function() {
+        var btn = $(this);
+        var postId = btn.data('id');
+        btn.prop('disabled', true).text('Syncing Episodes...');
+
+        $.post(ajaxurl, {
+            action: 'movie_elite_sync_ongoing_drama',
+            nonce: nonce,
+            post_id: postId
+        }, function(resp) {
+            if (resp.success) {
+                btn.css({'background':'#10b981','border-color':'#10b981','color':'#fff'}).text('Synced ✓');
+                alert(resp.data.message);
+                fetchOngoingDramas();
+            } else {
+                btn.prop('disabled', false).text('Try Again');
+                alert('Error: ' + resp.data.message);
+            }
+        });
+    });
+
+    $('#btn-rescan-ongoing').on('click', function() {
+        fetchOngoingDramas();
+    });
+
+    // Bulk Ongoing Sync Click
+    $('#btn-sync-all-ongoing').on('click', function() {
+        var dramasToSync = ongoingDramasData.filter(function(d) { return d.has_new; });
+        if (dramasToSync.length === 0) {
+            dramasToSync = ongoingDramasData;
+        }
+        if (dramasToSync.length === 0) {
+            alert('No Ongoing Dramas available to sync.');
+            return;
+        }
+
+        $('#dc-modal-title').text('Syncing Ongoing Drama Episodes...');
+        $('#dc-bulk-modal').css('display', 'flex');
+        $('#dc-btn-close-modal').hide();
+        $('#dc-modal-logs').html('Starting episode player sync for ' + dramasToSync.length + ' ongoing dramas...\n');
+
+        var total = dramasToSync.length;
+        var currentIdx = 0;
+
+        function processNextSync() {
+            if (currentIdx >= total) {
+                $('#dc-progress-fill').css('width', '100%');
+                $('#dc-progress-status').text('Completed ' + total + ' of ' + total);
+                $('#dc-progress-percent').text('100%');
+                $('#dc-modal-logs').append('\n🎉 Episode player sync finished successfully!');
+                $('#dc-btn-close-modal').show();
+                fetchOngoingDramas();
+                return;
+            }
+
+            var item = dramasToSync[currentIdx];
+            var pct  = Math.round((currentIdx / total) * 100);
+            $('#dc-progress-fill').css('width', pct + '%');
+            $('#dc-progress-status').text('Syncing (' + (currentIdx + 1) + ' of ' + total + '): ' + item.title);
+            $('#dc-progress-percent').text(pct + '%');
+
+            $('#dc-modal-logs').append('▶ Syncing: ' + item.title + '...\n');
+            var logBox = document.getElementById('dc-modal-logs');
+            logBox.scrollTop = logBox.scrollHeight;
+
+            $.post(ajaxurl, {
+                action: 'movie_elite_sync_ongoing_drama',
+                nonce: nonce,
+                post_id: item.post_id
+            }, function(resp) {
+                if (resp.success) {
+                    $('#dc-modal-logs').append('  ✓ SYNCED: ' + item.title + ' (' + resp.data.total_eps + ' Episodes, Status: ' + resp.data.status + ')\n');
+                } else {
+                    $('#dc-modal-logs').append('  ❌ ERROR: ' + item.title + ' (' + resp.data.message + ')\n');
+                }
+                currentIdx++;
+                setTimeout(processNextSync, 400);
+            }).fail(function() {
+                $('#dc-modal-logs').append('  ❌ FAILED HTTP REQUEST: ' + item.title + '\n');
+                currentIdx++;
+                setTimeout(processNextSync, 400);
+            });
+        }
+
+        processNextSync();
+    });
+
     // Direct Link Import Click
     $('#btn-import-direct').on('click', function() {
         var url = $('#dc-direct-url').val().trim();
@@ -866,13 +1241,14 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Bulk Import Logic
+    // Bulk Catalog Import Logic
     function runBulkImport(itemsToImport) {
         if (!itemsToImport || itemsToImport.length === 0) {
             alert('Please select at least one drama to import.');
             return;
         }
 
+        $('#dc-modal-title').text('Bulk Importing Asian Dramas...');
         $('#dc-bulk-modal').css('display', 'flex');
         $('#dc-btn-close-modal').hide();
         $('#dc-modal-logs').html('Starting bulk import of ' + itemsToImport.length + ' dramas...\n');
