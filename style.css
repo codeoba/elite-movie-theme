@@ -1740,3 +1740,63 @@ a:hover {
   font-size: 0.78rem;
   font-weight: 700;
 }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE APP BOTTOM NAVIGATION BAR (< 768px)
+   ═══════════════════════════════════════════════════════ */
+.me-mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 62px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  z-index: 9999;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 10px;
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.5);
+}
+
+.me-mb-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  gap: 4px;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.me-mb-nav-item i {
+  font-size: 1.2rem;
+}
+
+.me-mb-nav-item:hover,
+.me-mb-nav-item.active {
+  color: var(--accent-cyan);
+}
+
+@media (max-width: 768px) {
+  .me-mobile-bottom-nav {
+    display: flex;
+  }
+  body {
+    padding-bottom: 65px;
+  }
+}
+
+/* Server Health Status Badges */
+.server-btn.fastest-server {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
+}
+

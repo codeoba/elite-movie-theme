@@ -86,6 +86,42 @@ $hero_query = new WP_Query(array(
         </div>
     </section>
 
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        var rawHistory = localStorage.getItem('movie_elite_continue_watching');
+        if (!rawHistory) return;
+        try {
+            var items = JSON.parse(rawHistory);
+            if (!Array.isArray(items) || items.length === 0) return;
+            var container = document.getElementById('me-cw-grid');
+            var section = document.getElementById('me-continue-watching-section');
+            if (!container || !section) return;
+
+            var html = '';
+            items.forEach(function(item) {
+                var epText = item.totalEps > 1 ? 'Ep ' + (item.ep || 1) + ' / ' + item.totalEps : 'Movie';
+                var pct = item.pct || 50;
+                html += '<div style="background:var(--bg-primary); border:1px solid var(--border-color); border-radius:8px; overflow:hidden; display:flex; flex-direction:column; position:relative;">';
+                html += '  <div style="height:120px; position:relative; background:#1e293b;">';
+                html += '    <img src="' + (item.poster || '') + '" style="width:100%; height:100%; object-fit:cover;" alt="' + item.title + '" />';
+                html += '    <span style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.8); color:var(--accent-gold); font-size:0.65rem; font-weight:800; padding:2px 6px; border-radius:4px;">' + epText + '</span>';
+                html += '    <div style="position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(255,255,255,0.2);">';
+                html += '      <div style="height:100%; width:' + pct + '%; background:var(--accent-cyan);"></div>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '  <div style="padding:10px; display:flex; flex-direction:column; justify-content:space-between; flex:1;">';
+                html += '    <h4 style="margin:0 0 8px 0; font-size:0.82rem; color:#fff; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + item.title + '</h4>';
+                html += '    <a href="' + item.permalink + '" style="padding:5px 8px; font-size:0.75rem; text-align:center; display:block; border-radius:4px; background:var(--accent-cyan); color:#000; font-weight:800; text-decoration:none;"><i class="fa-solid fa-play"></i> Resume</a>';
+                html += '  </div>';
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+            section.style.display = 'block';
+        } catch(e) {}
+    });
+    </script>
+
     <!-- Alphabetical A-Z & Advanced Filter Bar -->
     <?php if (function_exists('movie_elite_render_filter_bar')) movie_elite_render_filter_bar(''); ?>
 

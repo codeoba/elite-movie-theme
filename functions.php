@@ -581,3 +581,58 @@ function movie_elite_get_actor_links($post_id) {
     }
     return implode(', ', $links);
 }
+
+/**
+ * Render Mobile App-like Bottom Navigation Bar
+ */
+function movie_elite_render_mobile_bottom_nav() {
+    $home_url    = esc_url(home_url('/'));
+    $movies_url  = esc_url(get_post_type_archive_link('movies') ?: home_url('/?post_type=movies'));
+    $tvshows_url = esc_url(get_post_type_archive_link('tvshows') ?: home_url('/?post_type=tvshows'));
+    ?>
+    <nav class="me-mobile-bottom-nav">
+        <a href="<?php echo $home_url; ?>" class="me-mb-nav-item <?php echo is_front_page() ? 'active' : ''; ?>">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="<?php echo $movies_url; ?>" class="me-mb-nav-item <?php echo (is_post_type_archive('movies') || is_singular('movies')) ? 'active' : ''; ?>">
+            <i class="fa-solid fa-film"></i>
+            <span>Movies</span>
+        </a>
+        <a href="<?php echo $tvshows_url; ?>" class="me-mb-nav-item <?php echo (is_post_type_archive('tvshows') || is_singular('tvshows')) ? 'active' : ''; ?>">
+            <i class="fa-solid fa-tv"></i>
+            <span>Dramas</span>
+        </a>
+        <a href="<?php echo $home_url; ?>#me-advanced-filter-bar" class="me-mb-nav-item me-btn-mb-filter">
+            <i class="fa-solid fa-filter"></i>
+            <span>Filter</span>
+        </a>
+        <a href="<?php echo $home_url; ?>#me-watchlist-sec" class="me-mb-nav-item">
+            <i class="fa-solid fa-heart"></i>
+            <span>Saved</span>
+        </a>
+    </nav>
+    <?php
+}
+
+/**
+ * AJAX Handler: Ongoing Drama Episode Release Subscription ("Notify Me")
+ */
+function movie_elite_ajax_subscribe_episode_notify() {
+    $email   = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+
+    if (empty($email) || !is_email($email) || !$post_id) {
+        wp_send_json_error(array('message' => 'Tafadhali ingiza barua pepe (email) sahihi.'));
+    }
+
+    $subs = get_post_meta($post_id, '_drama_subscribers', true) ?: array();
+    if (!in_array($email, $subs)) {
+        $subs[] = $email;
+        update_post_meta($post_id, '_drama_subscribers', array_unique($subs));
+    }
+
+    wp_send_json_success(array('message' => '🎉 Umesajiliwa kikamilifu! Utapokea barua pepe pindi episode mpya inapotoka.'));
+}
+add_action('wp_ajax_movie_elite_subscribe_episode_notify', 'movie_elite_ajax_subscribe_episode_notify');
+add_action('wp_ajax_nopriv_movie_elite_subscribe_episode_notify', 'movie_elite_ajax_subscribe_episode_notify');

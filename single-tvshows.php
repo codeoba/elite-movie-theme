@@ -319,6 +319,19 @@ while (have_posts()) : the_post();
                     </div>
                 </div>
 
+                <!-- Ongoing Drama Notify Me Button -->
+                <?php if ($status === 'Ongoing') : ?>
+                <div style="margin-bottom:28px; background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(16,185,129,0.12)); padding:18px; border-radius:var(--radius-md); border:1px solid #f59e0b; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h4 style="color:#f59e0b; margin:0 0 4px 0; font-size:1rem; font-weight:800;"><i class="fa-solid fa-bell"></i> Ongoing Drama Alert</h4>
+                        <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">Get notified via email when next episodes are released!</p>
+                    </div>
+                    <button type="button" id="btn-open-notify-modal" style="background:#f59e0b; color:#000; font-weight:800; border:none; padding:9px 18px; border-radius:8px; cursor:pointer; font-size:0.88rem; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-envelope-open-text"></i> Notify Me
+                    </button>
+                </div>
+                <?php endif; ?>
+
                 <!-- Download Links Section -->
                 <?php if (!empty($manual_downloads)) : ?>
                 <div style="margin-bottom:28px;">
@@ -375,6 +388,99 @@ while (have_posts()) : the_post();
         <div class="iframe-player-wrapper" id="trailer-iframe-box"></div>
     </div>
 </div>
+
+<!-- Notification Subscription Modal -->
+<div id="notify-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--bg-secondary); border-radius:16px; border:1px solid var(--border-color); max-width:450px; width:100%; padding:25px; box-shadow:0 20px 40px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; color:#fff; font-size:1.1rem;"><i class="fa-solid fa-bell" style="color:#f59e0b;"></i> Episode Release Alerts</h3>
+            <button type="button" id="btn-close-notify" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:18px;">Subscribing to <strong><?php echo esc_html($title); ?></strong>. We will send an instant alert email when new episodes drop!</p>
+        <form id="form-notify-sub">
+            <input type="email" id="notify-email-input" placeholder="Enter your email address..." style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-primary); color:#fff; margin-bottom:15px; box-sizing:border-box;" required />
+            <button type="submit" style="width:100%; background:#f59e0b; color:#000; font-weight:900; padding:10px; border-radius:8px; border:none; cursor:pointer; font-size:0.95rem;">
+                Subscribe Now
+            </button>
+        </form>
+        <div id="notify-msg-box" style="margin-top:12px; display:none; font-size:0.85rem; font-weight:700;"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    // 1. Continue Watching History Recorder
+    (function() {
+        var postId = <?php echo $post_id; ?>;
+        var title = <?php echo json_encode(get_the_title()); ?>;
+        var poster = <?php echo json_encode(get_post_meta($post_id, 'poster_url', true)); ?>;
+        var permalink = <?php echo json_encode(get_permalink()); ?>;
+        var currentEp = <?php echo isset($selected_ep) ? intval($selected_ep) : 1; ?>;
+        var totalEps = <?php echo intval(get_post_meta($post_id, 'total_episodes', true) ?: 1); ?>;
+        
+        var history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('movie_elite_continue_watching') || '[]');
+        } catch(e) {}
+        
+        history = history.filter(function(item) { return item.id !== postId; });
+        history.unshift({
+            id: postId,
+            title: title,
+            poster: poster,
+            permalink: permalink,
+            ep: currentEp,
+            totalEps: totalEps,
+            pct: Math.round((currentEp / totalEps) * 100),
+            time: Date.now()
+        });
+        
+        if (history.length > 10) history = history.slice(0, 10);
+        localStorage.setItem('movie_elite_continue_watching', JSON.stringify(history));
+    })();
+
+    // 2. Ongoing Drama Notify Modal Handlers
+    $('#btn-open-notify-modal').on('click', function() {
+        $('#notify-modal').css('display', 'flex');
+    });
+
+    $('#btn-close-notify').on('click', function() {
+        $('#notify-modal').hide();
+    });
+
+    $('#form-notify-sub').on('submit', function(e) {
+        e.preventDefault();
+        var email = $('#notify-email-input').val().trim();
+        if (!email) return;
+
+        var btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true).text('Subscribing...');
+
+        $.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+            action: 'movie_elite_subscribe_episode_notify',
+            email: email,
+            post_id: <?php echo $post_id; ?>
+        }, function(resp) {
+            btn.prop('disabled', false).text('Subscribe Now');
+            if (resp.success) {
+                $('#notify-msg-box').css('color', '#10b981').text(resp.data.message).show();
+                setTimeout(function() { $('#notify-modal').hide(); }, 2500);
+            } else {
+                $('#notify-msg-box').css('color', '#ef4444').text(resp.data.message).show();
+            }
+        });
+    });
+
+    // 3. Embed Server Health & Auto Fallback Engine
+    var serverBtns = $('.server-btn');
+    if (serverBtns.length > 0) {
+        serverBtns.first().addClass('fastest-server');
+        if (serverBtns.first().find('.fast-badge').length === 0) {
+            serverBtns.first().append(' <span class="fast-badge" style="background:#10b981; color:#000; font-weight:900; font-size:0.65rem; padding:2px 6px; border-radius:4px; margin-left:4px;">⚡ FAST</span>');
+        }
+    }
+});
+</script>
 
 <?php
 endwhile;

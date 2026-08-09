@@ -63,6 +63,11 @@
     </div>
 </footer>
 
-<?php wp_footer(); ?>
+<?php
+if (function_exists('movie_elite_render_mobile_bottom_nav')) {
+    movie_elite_render_mobile_bottom_nav();
+}
+wp_footer();
+?>
 </body>
 </html>

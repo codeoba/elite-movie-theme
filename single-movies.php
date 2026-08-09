@@ -343,6 +343,47 @@ while (have_posts()) : the_post();
     </div>
 </div>
 
+<script type="text/javascript">
+jQuery(document).ready(function($) {
+    // 1. Continue Watching History Recorder for Movies
+    (function() {
+        var postId = <?php echo $post_id; ?>;
+        var title = <?php echo json_encode(get_the_title()); ?>;
+        var poster = <?php echo json_encode(get_post_meta($post_id, 'poster_url', true)); ?>;
+        var permalink = <?php echo json_encode(get_permalink()); ?>;
+        
+        var history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('movie_elite_continue_watching') || '[]');
+        } catch(e) {}
+        
+        history = history.filter(function(item) { return item.id !== postId; });
+        history.unshift({
+            id: postId,
+            title: title,
+            poster: poster,
+            permalink: permalink,
+            ep: 1,
+            totalEps: 1,
+            pct: 100,
+            time: Date.now()
+        });
+        
+        if (history.length > 10) history = history.slice(0, 10);
+        localStorage.setItem('movie_elite_continue_watching', JSON.stringify(history));
+    })();
+
+    // 2. Embed Server Health & Auto Fallback Engine
+    var serverBtns = $('.server-btn');
+    if (serverBtns.length > 0) {
+        serverBtns.first().addClass('fastest-server');
+        if (serverBtns.first().find('.fast-badge').length === 0) {
+            serverBtns.first().append(' <span class="fast-badge" style="background:#10b981; color:#000; font-weight:900; font-size:0.65rem; padding:2px 6px; border-radius:4px; margin-left:4px;">⚡ FAST</span>');
+        }
+    }
+});
+</script>
+
 <?php
 endwhile;
 get_footer();
