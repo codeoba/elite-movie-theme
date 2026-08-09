@@ -140,6 +140,7 @@ $hero_query = new WP_Query(array(
             $val   = $blk['value'] ?? 'recommended';
             $title = $blk['name'] ?? 'Block';
             $icon  = $blk['icon'] ?? 'fa-film';
+            $count = isset($blk['count']) ? max(1, intval($blk['count'])) : 10;
 
             // Determine direct View All URL
             $view_all_url = home_url('/movies/');
@@ -164,7 +165,7 @@ $hero_query = new WP_Query(array(
             $query_args = array(
                 'post_type'      => array('movies', 'tvshows'),
                 'post_status'    => 'publish',
-                'posts_per_page' => 10,
+                'posts_per_page' => $count,
                 'orderby'        => 'date',
                 'order'          => 'DESC'
             );

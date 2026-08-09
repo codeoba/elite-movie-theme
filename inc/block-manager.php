@@ -15,26 +15,27 @@ if (!defined('ABSPATH')) {
  */
 function movie_elite_get_blocks_config() {
     $defaults = array(
-        'recommended' => array('id' => 'recommended', 'name' => 'Recommended Movies', 'status' => 'active', 'rule' => 'category',   'value' => 'recommended', 'icon' => 'fa-fire'),
-        'movies'      => array('id' => 'movies',      'name' => 'Movies',             'status' => 'active', 'rule' => 'post_type', 'value' => 'movies',      'icon' => 'fa-clapperboard'),
-        'action'      => array('id' => 'action',      'name' => 'Action Movies',      'status' => 'active', 'rule' => 'genre',      'value' => 'action',      'icon' => 'fa-gun'),
-        'romance'     => array('id' => 'romance',     'name' => 'Romance Movies',     'status' => 'active', 'rule' => 'genre',      'value' => 'romance',     'icon' => 'fa-heart'),
-        'korean'      => array('id' => 'korean',      'name' => 'Korean Movies',      'status' => 'active', 'rule' => 'country',    'value' => 'korea',       'icon' => 'fa-film'),
-        'chinese'     => array('id' => 'chinese',     'name' => 'Chinese Movies',     'status' => 'active', 'rule' => 'country',    'value' => 'china',       'icon' => 'fa-dragon'),
-        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'post_type',  'value' => 'tvshows',     'icon' => 'fa-tv'),
-        'asiandrama'  => array('id' => 'asiandrama',  'name' => 'Asian Dramas',       'status' => 'active', 'rule' => 'category',   'value' => 'asian-drama', 'icon' => 'fa-masks-theater'),
-        'custom_1'    => array('id' => 'custom_1',    'name' => 'Custom Block 1',     'status' => 'off',    'rule' => 'genre',      'value' => 'sci-fi',      'icon' => 'fa-cube'),
-        'custom_2'    => array('id' => 'custom_2',    'name' => 'Custom Block 2',     'status' => 'off',    'rule' => 'year',       'value' => '2026',        'icon' => 'fa-star'),
+        'recommended' => array('id' => 'recommended', 'name' => 'Recommended Movies', 'status' => 'active', 'rule' => 'category',   'value' => 'recommended', 'icon' => 'fa-fire',          'count' => 10),
+        'movies'      => array('id' => 'movies',      'name' => 'Movies',             'status' => 'active', 'rule' => 'post_type', 'value' => 'movies',      'icon' => 'fa-clapperboard', 'count' => 10),
+        'action'      => array('id' => 'action',      'name' => 'Action Movies',      'status' => 'active', 'rule' => 'genre',      'value' => 'action',      'icon' => 'fa-gun',          'count' => 10),
+        'romance'     => array('id' => 'romance',     'name' => 'Romance Movies',     'status' => 'active', 'rule' => 'genre',      'value' => 'romance',     'icon' => 'fa-heart',        'count' => 10),
+        'korean'      => array('id' => 'korean',      'name' => 'Korean Movies',      'status' => 'active', 'rule' => 'country',    'value' => 'korea',       'icon' => 'fa-film',         'count' => 10),
+        'chinese'     => array('id' => 'chinese',     'name' => 'Chinese Movies',     'status' => 'active', 'rule' => 'country',    'value' => 'china',       'icon' => 'fa-dragon',       'count' => 10),
+        'tvshows'     => array('id' => 'tvshows',     'name' => 'TV Shows & Series',  'status' => 'active', 'rule' => 'post_type',  'value' => 'tvshows',     'icon' => 'fa-tv',           'count' => 10),
+        'asiandrama'  => array('id' => 'asiandrama',  'name' => 'Asian Dramas',       'status' => 'active', 'rule' => 'category',   'value' => 'asian-drama', 'icon' => 'fa-masks-theater', 'count' => 10),
+        'custom_1'    => array('id' => 'custom_1',    'name' => 'Custom Block 1',     'status' => 'off',    'rule' => 'genre',      'value' => 'sci-fi',      'icon' => 'fa-cube',          'count' => 10),
+        'custom_2'    => array('id' => 'custom_2',    'name' => 'Custom Block 2',     'status' => 'off',    'rule' => 'year',       'value' => '2026',        'icon' => 'fa-star',          'count' => 10),
     );
 
     $saved = get_option('movie_elite_blocks_config', array());
     $result = wp_parse_args($saved, $defaults);
 
-    // Normalize active / on status
+    // Normalize active / on status & count integer
     foreach ($result as &$blk) {
         if (($blk['status'] ?? '') === 'on') {
             $blk['status'] = 'active';
         }
+        $blk['count'] = isset($blk['count']) ? max(1, intval($blk['count'])) : 10;
     }
     unset($blk);
 
@@ -78,6 +79,7 @@ function movie_elite_block_manager_page_render() {
                     $blocks[$id]['rule']   = sanitize_text_field($data['rule']);
                     $blocks[$id]['value']  = sanitize_text_field($data['value']);
                     $blocks[$id]['icon']   = sanitize_text_field($data['icon']);
+                    $blocks[$id]['count']  = isset($data['count']) ? max(1, intval($data['count'])) : 10;
                 }
             }
             update_option('movie_elite_blocks_config', $blocks);
@@ -89,19 +91,20 @@ function movie_elite_block_manager_page_render() {
 ?>
 <div class="wrap">
     <h1><span class="dashicons dashicons-layout"></span> Homepage Block Layout Manager</h1>
-    <p>Configure which section blocks appear on the main homepage, their display order, taxonomy filter rules, and active/inactive status.</p>
+    <p>Configure which section blocks appear on the main homepage, their display order, taxonomy filter rules, active/inactive status, and maximum content items per block.</p>
 
     <form method="post" action="">
         <?php wp_nonce_field('movie_elite_blocks_nonce'); ?>
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
-                    <th style="width: 140px;">Block ID</th>
+                    <th style="width: 120px;">Block ID</th>
                     <th>Display Title</th>
-                    <th style="width: 120px;">Status</th>
-                    <th style="width: 140px;">Filter Rule</th>
+                    <th style="width: 110px;">Status</th>
+                    <th style="width: 130px;">Filter Rule</th>
                     <th>Filter Value / Slug</th>
-                    <th style="width: 140px;">FontAwesome Icon</th>
+                    <th style="width: 110px;">Item Count</th>
+                    <th style="width: 130px;">FontAwesome Icon</th>
                 </tr>
             </thead>
             <tbody>
@@ -128,6 +131,9 @@ function movie_elite_block_manager_page_render() {
                     </td>
                     <td>
                         <input type="text" name="blocks[<?php echo esc_attr($id); ?>][value]" value="<?php echo esc_attr($blk['value']); ?>" class="widefat" placeholder="e.g. action, korea, 2026" />
+                    </td>
+                    <td>
+                        <input type="number" name="blocks[<?php echo esc_attr($id); ?>][count]" value="<?php echo esc_attr($blk['count']); ?>" min="1" max="100" style="width: 75px;" />
                     </td>
                     <td>
                         <input type="text" name="blocks[<?php echo esc_attr($id); ?>][icon]" value="<?php echo esc_attr($blk['icon']); ?>" class="widefat" placeholder="fa-film" />
