@@ -652,14 +652,14 @@ a:hover {
 }
 
 /* Watchlist Heart Circle (Bottom-Right of Poster) */
-.me-wl-btn {
+.card-poster .me-wl-btn {
   position: absolute !important;
   bottom: 8px !important;
   right: 8px !important;
   top: auto !important;
   left: auto !important;
-  width: 30px !important;
-  height: 30px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50% !important;
   background: rgba(26, 29, 46, 0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -668,16 +668,38 @@ a:hover {
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  font-size: 0.8rem !important;
+  font-size: 0.85rem !important;
   z-index: 10 !important;
   transition: all 0.2s ease !important;
 }
 
-.me-wl-btn:hover,
-.me-wl-btn.active {
+.card-poster .me-wl-btn:hover,
+.card-poster .me-wl-btn.active {
   background: var(--accent-magenta) !important;
   border-color: var(--accent-magenta) !important;
   color: #fff !important;
+}
+
+/* Standalone Watchlist Action Button (Player Bar & Single Pages) */
+.alphabet-btn.me-wl-btn {
+  position: relative !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 0.85rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+}
+
+.alphabet-btn.me-wl-btn.active {
+  background: var(--accent-magenta) !important;
+  color: #fff !important;
+  border-color: var(--accent-magenta) !important;
 }
 
 /* Play Hover Overlay */
