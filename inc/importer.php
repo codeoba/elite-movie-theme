@@ -54,6 +54,31 @@ function movie_elite_importer_page_render() {
             <input type="submit" name="save_tmdb_key" class="button button-secondary" value="Save API Key" />
         </form>
 
+        <!-- Quick Action Presets Bar -->
+        <div style="background: linear-gradient(135deg, #1a1d2e, #252836); padding: 18px 22px; border-radius: 10px; color: #fff; margin-bottom: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.1);">
+            <strong style="color: #00d4ff; font-size: 1rem; display: block; margin-bottom: 10px;">⚡ Quick Presets (1-Click Fetching):</strong>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <button type="button" class="button btn-quick-preset" data-feed="popular" data-type="movie" style="background:#00d4ff; color:#000; border:none; font-weight:800; padding:6px 14px;">
+                    🔥 Popular Movies
+                </button>
+                <button type="button" class="button btn-quick-preset" data-feed="popular" data-type="tv" style="background:#00ff88; color:#000; border:none; font-weight:800; padding:6px 14px;">
+                    📺 Popular TV Shows
+                </button>
+                <button type="button" class="button btn-quick-preset" data-feed="trending" data-type="movie" style="background:#ff9100; color:#000; border:none; font-weight:800; padding:6px 14px;">
+                    📈 Trending Movies
+                </button>
+                <button type="button" class="button btn-quick-preset" data-feed="trending" data-type="tv" style="background:#ff2a70; color:#fff; border:none; font-weight:800; padding:6px 14px;">
+                    📈 Trending TV Shows
+                </button>
+                <button type="button" class="button btn-quick-preset" data-feed="top_rated" data-type="movie" style="background:#ffc107; color:#000; border:none; font-weight:800; padding:6px 14px;">
+                    ⭐ Top Rated Masterpieces
+                </button>
+                <button type="button" class="button btn-quick-preset" data-feed="asian_drama" data-type="tv" style="background:#9c27b0; color:#fff; border:none; font-weight:800; padding:6px 14px;">
+                    ⛩️ Popular Asian Dramas (K-Drama & C-Drama)
+                </button>
+            </div>
+        </div>
+
         <!-- Search & Filter Controls -->
         <div style="background:#fff; padding:25px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:25px;">
             <h2 style="margin-top:0;">Search & Filter Parameters</h2>
@@ -63,6 +88,17 @@ function movie_elite_importer_page_render() {
                     <select id="import-type" class="widefat" style="font-weight:bold; color:#007cba;">
                         <option value="movie">🍿 Movies (`movies` CPT)</option>
                         <option value="tv">📺 TV Shows & Dramas (`tvshows` CPT)</option>
+                    </select>
+                </div>
+                <div>
+                    <label><strong>Feed / Sort Method:</strong></label>
+                    <select id="import-feed" class="widefat" style="font-weight:bold; color:#ff0055;">
+                        <option value="popular">🔥 Popular Worldwide</option>
+                        <option value="trending">📈 Trending Today</option>
+                        <option value="top_rated">⭐ Top Rated</option>
+                        <option value="now_playing">🍿 Now Playing / On The Air</option>
+                        <option value="asian_drama">⛩️ Popular Asian Dramas</option>
+                        <option value="discover">🔍 Custom Filter / Search</option>
                     </select>
                 </div>
                 <div>
@@ -95,7 +131,7 @@ function movie_elite_importer_page_render() {
             <div style="display:flex; align-items:center; justify-content:space-between; margin-top:20px; flex-wrap:wrap; gap:15px;">
                 <div style="display:flex; gap:12px;">
                     <button type="button" id="btn-run-search" class="button button-primary button-large" style="background:#00f2fe; border-color:#00f2fe; color:#000; font-weight:700;">
-                        🔍 Search & Fetch Results
+                        🔍 Fetch Results
                     </button>
                     <label style="display:flex; align-items:center; gap:6px; font-weight:600; cursor:pointer;">
                         <input type="checkbox" id="chk-hide-imported" /> Hide Already Imported Items
@@ -157,6 +193,7 @@ function movie_elite_importer_page_render() {
 
         function fetchTmdbResults(page) {
             var type  = $('#import-type').val();
+            var feed  = $('#import-feed').val();
             var title = $('#import-title').val().trim();
             var imdb  = $('#import-imdb').val().trim();
             var year  = $('#import-year').val().trim();
@@ -171,6 +208,17 @@ function movie_elite_importer_page_render() {
                 url = 'https://api.themoviedb.org/3/find/' + imdb + '?api_key=' + apiKey + '&external_source=imdb_id';
             } else if (title) {
                 url = 'https://api.themoviedb.org/3/search/' + endpoint + '?api_key=' + apiKey + '&query=' + encodeURIComponent(title) + '&page=' + currentPage;
+            } else if (feed === 'popular') {
+                url = 'https://api.themoviedb.org/3/' + endpoint + '/popular?api_key=' + apiKey + '&page=' + currentPage;
+            } else if (feed === 'trending') {
+                url = 'https://api.themoviedb.org/3/trending/' + endpoint + '/day?api_key=' + apiKey + '&page=' + currentPage;
+            } else if (feed === 'top_rated') {
+                url = 'https://api.themoviedb.org/3/' + endpoint + '/top_rated?api_key=' + apiKey + '&page=' + currentPage;
+            } else if (feed === 'now_playing') {
+                var sub = (type === 'tv') ? 'on_the_air' : 'now_playing';
+                url = 'https://api.themoviedb.org/3/' + endpoint + '/' + sub + '?api_key=' + apiKey + '&page=' + currentPage;
+            } else if (feed === 'asian_drama') {
+                url = 'https://api.themoviedb.org/3/discover/tv?api_key=' + apiKey + '&with_origin_country=KR|CN|TW|JP&sort_by=popularity.desc&page=' + currentPage;
             } else {
                 url = 'https://api.themoviedb.org/3/discover/' + endpoint + '?api_key=' + apiKey + '&sort_by=popularity.desc&page=' + currentPage;
                 if (year) {
@@ -259,6 +307,26 @@ function movie_elite_importer_page_render() {
 
             $('#import-grid').html(html);
         }
+
+        // Quick Presets Handler
+        $('.btn-quick-preset').on('click', function() {
+            var presetFeed = $(this).attr('data-feed');
+            var presetType = $(this).attr('data-type');
+            $('#import-type').val(presetType);
+            $('#import-feed').val(presetFeed);
+            $('#import-title').val('');
+            $('#import-imdb').val('');
+            fetchTmdbResults(1);
+        });
+
+        // Type or Feed change handler
+        $('#import-type, #import-feed').on('change', function() {
+            if ($('#import-feed').val() !== 'discover') {
+                $('#import-title').val('');
+                $('#import-imdb').val('');
+            }
+            fetchTmdbResults(1);
+        });
 
         // Search trigger
         $('#btn-run-search').on('click', function() {
