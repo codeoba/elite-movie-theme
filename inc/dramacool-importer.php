@@ -65,6 +65,30 @@ function movie_elite_http_get_html($url) {
 }
 
 /**
+ * Clean DramaCool scraped titles by stripping "Dramacool", "Episode XX English SUB", etc.
+ *
+ * @param string $title Raw title string
+ * @return string Clean title
+ */
+function movie_elite_clean_dramacool_title($title) {
+    if (empty($title)) return '';
+
+    // Remove "| Dramacool", "- Dramacool", "Dramacool" (case-insensitive)
+    $title = preg_replace('/[\|–\-]?\s*dramacool(?:\.com|\.ch|\.ro|\.sr|\.ru|\.com\.ro)?/i', '', $title);
+
+    // Remove "Episode \d+ (English SUB|EngSub|RAW|SUB)?" suffixes if present in drama main title
+    $title = preg_replace('/\s*episode\s*\d+.*$/i', '', $title);
+
+    // Remove trailing "English SUB", "EngSub", "SUB", "RAW"
+    $title = preg_replace('/\s*(?:English SUB|EngSub|SUB|RAW)\s*$/i', '', $title);
+
+    // Clean extra symbols / pipes / hyphens at start or end
+    $title = trim($title, " \t\n\r\0\x0B|-–");
+
+    return trim($title);
+}
+
+/**
  * Scrape DramaCool Directory Catalog (20 Dramas per Page with Pagination)
  *
  * @param int    $page_num Page number (default 1)
@@ -110,7 +134,7 @@ function movie_elite_scrape_dramacool_directory($page_num = 1, $tab = 'all', $se
             if ($a_nodes->length === 0) continue;
 
             $a_tag = $a_nodes->item(0);
-            $drama_title = trim($a_tag->textContent);
+            $drama_title = movie_elite_clean_dramacool_title($a_tag->textContent);
             $drama_href  = $a_tag->getAttribute('href');
 
             if (empty($drama_title) || empty($drama_href)) continue;
@@ -218,7 +242,8 @@ function movie_elite_scrape_dramacool_drama($dramacool_url) {
 
     // 1. Title
     $title_nodes = $xpath->query('//div[@id="drama-details"]//h1 | //h1');
-    $title = ($title_nodes->length > 0) ? trim($title_nodes->item(0)->textContent) : 'Asian Drama Title';
+    $raw_title   = ($title_nodes->length > 0) ? trim($title_nodes->item(0)->textContent) : 'Asian Drama Title';
+    $title       = movie_elite_clean_dramacool_title($raw_title);
 
     // 2. Poster Image
     $poster_nodes = $xpath->query('//figure[contains(@class, "drama-thumbnail")]//img | //div[contains(@class, "img")]//img');
@@ -394,7 +419,7 @@ function movie_elite_scrape_dramacool_drama($dramacool_url) {
  * Save Scraped Asian Drama Data into WordPress `tvshows` Post
  */
 function movie_elite_insert_dramacool_post($scraped_data) {
-    $title     = sanitize_text_field($scraped_data['title']);
+    $title     = movie_elite_clean_dramacool_title($scraped_data['title']);
     $poster    = esc_url_raw($scraped_data['poster_url']);
     $synopsis  = wp_kses_post($scraped_data['synopsis']);
     $country   = sanitize_text_field($scraped_data['country']);
@@ -406,12 +431,22 @@ function movie_elite_insert_dramacool_post($scraped_data) {
     $episodes  = (array) $scraped_data['episodes'];
 
     $existing_post = get_page_by_title($title, OBJECT, 'tvshows');
+    if (!$existing_post) {
+        global $wpdb;
+        $clean_like = '%' . $wpdb->esc_like(mb_substr($title, 0, 15)) . '%';
+        $found_id = $wpdb->get_var($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_type = 'tvshows' AND post_title LIKE %s LIMIT 1", $clean_like));
+        if ($found_id) {
+            $existing_post = get_post($found_id);
+        }
+    }
+
     $post_id = 0;
 
     if ($existing_post) {
         $post_id = $existing_post->ID;
         wp_update_post(array(
             'ID'           => $post_id,
+            'post_title'   => $title,
             'post_content' => $synopsis,
             'post_status'  => 'publish'
         ));

@@ -496,3 +496,24 @@ function movie_elite_render_filter_bar($preselect_ptype = '') {
     </section>
     <?php
 }
+
+/**
+ * Filter frontend post titles to clean out any legacy 'Dramacool', 'Episode XX', or 'English SUB' text
+ */
+function movie_elite_clean_display_title($title, $id = 0) {
+    if (is_admin() && !defined('DOING_AJAX')) {
+        return $title;
+    }
+    if (preg_match('/dramacool/i', $title) || preg_match('/english sub/i', $title) || preg_match('/episode\s*\d+/i', $title)) {
+        if (function_exists('movie_elite_clean_dramacool_title')) {
+            return movie_elite_clean_dramacool_title($title);
+        } else {
+            $title = preg_replace('/[\|–\-]?\s*dramacool(?:\.com|\.ch|\.ro|\.sr|\.ru|\.com\.ro)?/i', '', $title);
+            $title = preg_replace('/\s*episode\s*\d+.*$/i', '', $title);
+            $title = preg_replace('/\s*(?:English SUB|EngSub|SUB|RAW)\s*$/i', '', $title);
+            return trim($title, " \t\n\r\0\x0B|-–");
+        }
+    }
+    return $title;
+}
+add_filter('the_title', 'movie_elite_clean_display_title', 10, 2);
