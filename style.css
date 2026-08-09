@@ -69,30 +69,36 @@ a:hover {
   padding: 0 20px;
 }
 
-/* Navbar Header */
+/* Navbar Header (2-Row Architecture) */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: var(--glass-bg);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
-  padding: 14px 0;
+  padding: 0;
 }
 
-.header-inner {
+/* Row 1: Top Bar */
+.header-top-row {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 18, 26, 0.95);
+}
+
+.header-top-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  width: 100%;
+  gap: 24px;
 }
 
 .site-logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 900;
   color: #fff;
   letter-spacing: -0.5px;
@@ -116,37 +122,52 @@ a:hover {
   100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--accent-magenta)); }
 }
 
-.nav-search {
+/* Prominent Center Search Bar */
+.nav-search-center {
   flex: 1;
-  max-width: 480px;
+  max-width: 550px;
   position: relative;
+  margin: 0 auto;
 }
 
-.nav-search input {
+.nav-search-center input {
   width: 100%;
-  padding: 10px 18px 10px 42px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 10px 20px 10px 44px;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-color);
   border-radius: 30px;
   color: #fff;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   outline: none;
   transition: var(--transition);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.nav-search input:focus {
+.nav-search-center input:focus {
   border-color: var(--accent-cyan);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
 }
 
-.nav-search-icon {
+.nav-search-center .nav-search-icon {
   position: absolute;
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+}
+
+.header-top-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Row 2: Navigation Bar */
+.header-nav-row {
+  padding: 8px 0;
+  background: rgba(20, 24, 36, 0.98);
 }
 
 .site-nav {
@@ -157,9 +178,12 @@ a:hover {
 .main-nav {
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: flex-start;
+  gap: 24px;
   list-style: none;
   white-space: nowrap;
+  margin: 0;
+  padding: 0;
 }
 
 .main-nav > li {

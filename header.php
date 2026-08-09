@@ -49,32 +49,41 @@ $nav_years = array('2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019
 ?>
 
 <header class="site-header">
-    <div class="container">
-        <div class="header-inner">
-            <!-- Site Logo -->
-            <a href="<?php echo esc_url(home_url('/')); ?>" class="site-logo">
-                <i class="fa-solid fa-clapperboard movie-pop-icon"></i>
-                MOVIE<span>ELITE PRO</span>
-            </a>
+    <!-- ROW 1: TOP HEADER BAR (Logo on Left, Search Bar in Middle, Color Switcher on Right) -->
+    <div class="header-top-row">
+        <div class="container">
+            <div class="header-top-inner">
+                <!-- Site Logo -->
+                <a href="<?php echo esc_url(home_url('/')); ?>" class="site-logo">
+                    <i class="fa-solid fa-clapperboard movie-pop-icon"></i>
+                    MOVIE<span>ELITE PRO</span>
+                </a>
 
-            <!-- Search Bar with Instant Live Preview -->
-            <div class="nav-search" style="position:relative;">
-                <form method="get" action="<?php echo esc_url(home_url('/')); ?>">
-                    <i class="fa-solid fa-magnifying-glass nav-search-icon"></i>
-                    <input type="text" name="s" id="movie-search-input" value="<?php echo esc_attr(get_search_query()); ?>" placeholder="Search movies, tv shows, Asian dramas..." autocomplete="off" />
-                </form>
-                <div id="live-search-results" class="live-search-dropdown" style="display:none;"></div>
+                <!-- Prominent Center Search Bar with Instant Live Preview -->
+                <div class="nav-search-center">
+                    <form method="get" action="<?php echo esc_url(home_url('/')); ?>">
+                        <i class="fa-solid fa-magnifying-glass nav-search-icon"></i>
+                        <input type="text" name="s" id="movie-search-input" value="<?php echo esc_attr(get_search_query()); ?>" placeholder="Search thousands of movies, tv shows, Asian dramas..." autocomplete="off" />
+                    </form>
+                    <div id="live-search-results" class="live-search-dropdown" style="display:none;"></div>
+                </div>
+
+                <!-- Right Controls: Accent Theme Color Switcher & Watchlist -->
+                <div class="header-top-right">
+                    <div class="accent-switcher-bar" title="Change Theme Accent Color">
+                        <span class="accent-dot" data-color="#00d4ff" style="background:#00d4ff;" title="Cyan Glow"></span>
+                        <span class="accent-dot" data-color="#ffc107" style="background:#ffc107;" title="Gold Star"></span>
+                        <span class="accent-dot" data-color="#ff2a70" style="background:#ff2a70;" title="Neon Pink"></span>
+                        <span class="accent-dot" data-color="#00ff88" style="background:#00ff88;" title="Emerald Green"></span>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Accent Theme Color Switcher -->
-            <div class="accent-switcher-bar" title="Change Theme Accent Color">
-                <span class="accent-dot" data-color="#00d4ff" style="background:#00d4ff;" title="Cyan Glow"></span>
-                <span class="accent-dot" data-color="#ffc107" style="background:#ffc107;" title="Gold Star"></span>
-                <span class="accent-dot" data-color="#ff2a70" style="background:#ff2a70;" title="Neon Pink"></span>
-                <span class="accent-dot" data-color="#00ff88" style="background:#00ff88;" title="Emerald Green"></span>
-            </div>
-
-            <!-- Modern Dropdown Navigation Menu -->
+    <!-- ROW 2: DEDICATED NAVIGATION MENU BAR -->
+    <div class="header-nav-row">
+        <div class="container">
             <nav class="site-nav">
                 <ul class="main-nav">
                     <li class="<?php echo (is_front_page() && !is_search()) ? 'active' : ''; ?>">
