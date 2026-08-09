@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * MovieElite Pro - Meta Box for Movies & TV Shows
  *
@@ -43,11 +43,10 @@ function movie_elite_render_meta_box($post) {
     $total_seasons  = get_post_meta($pid, 'total_seasons', true) ?: '1';
     $total_episodes = get_post_meta($pid, 'total_episodes', true) ?: '12';
 
-    // Repeatable Manual Players
+    // Repeatable Manual Players (empty by default unless user added links)
     $manual_players = get_post_meta($pid, 'manual_player_embeds', true);
-    if (empty($manual_players) || !is_array($manual_players)) {
-        $legacy = get_post_meta($pid, 'primary_embed_url', true);
-        $manual_players = $legacy ? array(array('label' => 'Server 1', 'url' => $legacy)) : array();
+    if (!is_array($manual_players)) {
+        $manual_players = array();
     }
 
     // Repeatable Download Links

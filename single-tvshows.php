@@ -70,11 +70,10 @@ while (have_posts()) : the_post();
         $auto_embeds = function_exists('movie_elite_generate_tv_embeds') ? movie_elite_generate_tv_embeds($clean_imdb, $clean_tmdb, 1, 1) : array();
     }
 
-    // Manual Player Embeds (meta) - prepended FIRST before auto/DramaCool servers
+    // Manual Player Embeds (meta) - prepended FIRST ONLY IF filled by admin
     $manual_players = get_post_meta($post_id, 'manual_player_embeds', true);
-    if (empty($manual_players) || !is_array($manual_players)) {
-        $legacy_embed = get_post_meta($post_id, 'primary_embed_url', true);
-        $manual_players = $legacy_embed ? array(array('label' => 'Server 1 (Manual)', 'url' => $legacy_embed)) : array();
+    if (!is_array($manual_players)) {
+        $manual_players = array();
     }
 
     // Merge: manual first, then auto/DramaCool
