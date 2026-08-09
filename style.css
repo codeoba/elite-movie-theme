@@ -78,13 +78,14 @@ a:hover {
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
   padding: 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 /* Row 1: Top Bar */
 .header-top-row {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(15, 18, 26, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 18, 26, 0.96);
 }
 
 .header-top-inner {
@@ -92,17 +93,20 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  width: 100%;
 }
 
+/* Site Logo */
 .site-logo {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   font-size: 1.55rem;
   font-weight: 900;
-  color: #fff;
+  color: #ffffff;
   letter-spacing: -0.5px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .site-logo span {
@@ -125,49 +129,69 @@ a:hover {
 /* Prominent Center Search Bar */
 .nav-search-center {
   flex: 1;
-  max-width: 550px;
+  max-width: 580px;
   position: relative;
   margin: 0 auto;
-}
-
-.nav-search-center input {
   width: 100%;
-  padding: 10px 20px 10px 44px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-color);
-  border-radius: 30px;
-  color: #fff;
-  font-size: 0.9rem;
-  outline: none;
-  transition: var(--transition);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.nav-search-center input:focus {
-  border-color: var(--accent-cyan);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.25);
+.nav-search-center form {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.nav-search-center input#movie-search-input {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 20px 0 46px !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 30px !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+  outline: none !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.nav-search-center input#movie-search-input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.8;
+}
+
+.nav-search-center input#movie-search-input:focus {
+  border-color: var(--accent-cyan) !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
 }
 
 .nav-search-center .nav-search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  position: absolute !important;
+  left: 18px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
 }
 
 .header-top-right {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 /* Row 2: Navigation Bar */
 .header-nav-row {
   padding: 8px 0;
   background: rgba(20, 24, 36, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .site-nav {
@@ -1058,18 +1082,16 @@ a:hover {
 /* ----------------------------------------------------
    Responsive Media Queries for Mobile & Tablet
    ---------------------------------------------------- */
-@media (max-width: 1024px) {
-  .header-inner {
+@media (max-width: 991px) {
+  .header-top-inner {
     flex-wrap: wrap;
+    gap: 12px;
   }
-  .nav-search {
+  .nav-search-center {
     order: 3;
     max-width: 100%;
     width: 100%;
   }
-}
-
-@media (max-width: 991px) {
   .site-nav {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -1099,10 +1121,9 @@ a:hover {
     padding: 0 10px;
   }
 
-  .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .header-top-inner {
+    align-items: center;
+    justify-content: space-between;
   }
 
   .site-logo {
@@ -1541,6 +1562,8 @@ a:hover {
   font-size: 0.72rem;
   color: var(--accent-cyan);
 }
+
+.me-cw-card {
   display: flex;
   gap: 10px;
   background: var(--bg-card);
