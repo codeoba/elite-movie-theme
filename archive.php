@@ -65,6 +65,19 @@ if (is_post_type_archive('movies')) {
             </a>
         </div>
 
+        <!-- Advanced Filter Bar for Movies & TV Shows Pages -->
+        <?php
+        $pre_ptype = '';
+        if (is_post_type_archive('movies')) {
+            $pre_ptype = 'movies';
+        } elseif (is_post_type_archive('tvshows')) {
+            $pre_ptype = 'tvshows';
+        }
+        if (function_exists('movie_elite_render_filter_bar')) {
+            movie_elite_render_filter_bar($pre_ptype);
+        }
+        ?>
+
         <!-- Movies & TV Shows Grid (3 Columns on Mobile via CSS) -->
         <?php if (have_posts()) : ?>
             <div class="movies-grid" style="margin-bottom:40px;">

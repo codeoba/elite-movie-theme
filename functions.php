@@ -163,6 +163,77 @@ function movie_elite_archive_query_modifier($query) {
 add_action('pre_get_posts', 'movie_elite_archive_query_modifier');
 
 /**
+ * Dynamic Helpers for Release Years, Genres, Countries & Qualities
+ */
+function movie_elite_get_all_release_years() {
+    global $wpdb;
+    $years = $wpdb->get_col("
+        SELECT DISTINCT meta_value 
+        FROM {$wpdb->postmeta} 
+        WHERE meta_key = 'release_year' 
+          AND meta_value IS NOT NULL 
+          AND meta_value != '' 
+          AND meta_value REGEXP '^[0-9]{4}$'
+        ORDER BY CAST(meta_value AS UNSIGNED) DESC
+    ");
+    if (empty($years)) {
+        $current_yr = (int)date('Y');
+        for ($y = $current_yr; $y >= 2000; $y--) {
+            $years[] = (string)$y;
+        }
+    }
+    return array_values(array_unique($years));
+}
+
+function movie_elite_get_all_genres() {
+    $terms = get_terms(array(
+        'taxonomy'   => 'genre',
+        'hide_empty' => false,
+        'orderby'    => 'name',
+        'order'      => 'ASC'
+    ));
+    $res = array();
+    if (!is_wp_error($terms) && !empty($terms)) {
+        foreach ($terms as $t) {
+            $res[] = array('slug' => $t->slug, 'name' => $t->name);
+        }
+    }
+    return $res;
+}
+
+function movie_elite_get_all_countries() {
+    $terms = get_terms(array(
+        'taxonomy'   => 'country',
+        'hide_empty' => false,
+        'orderby'    => 'name',
+        'order'      => 'ASC'
+    ));
+    $res = array();
+    if (!is_wp_error($terms) && !empty($terms)) {
+        foreach ($terms as $t) {
+            $res[] = array('slug' => $t->slug, 'name' => $t->name);
+        }
+    }
+    return $res;
+}
+
+function movie_elite_get_all_qualities() {
+    global $wpdb;
+    $qualities = $wpdb->get_col("
+        SELECT DISTINCT meta_value 
+        FROM {$wpdb->postmeta} 
+        WHERE meta_key = 'movie_quality' 
+          AND meta_value IS NOT NULL 
+          AND meta_value != ''
+        ORDER BY meta_value ASC
+    ");
+    if (empty($qualities)) {
+        $qualities = array('4K', '1080p', '720p', 'HDRip', 'WEBRip', 'CAM');
+    }
+    return array_values(array_unique($qualities));
+}
+
+/**
  * Enqueue Scripts & Styles
  */
 function movie_elite_enqueue_scripts() {
@@ -177,6 +248,14 @@ function movie_elite_enqueue_scripts() {
     ));
 
     wp_enqueue_script('movie-elite-features', MOVIE_ELITE_URI . '/js/features.js', array(), MOVIE_ELITE_VERSION, true);
+    wp_localize_script('movie-elite-features', 'meFeatures', array(
+        'ajaxurl'   => admin_url('admin-ajax.php'),
+        'nonce'     => wp_create_nonce('movie_elite_nonce'),
+        'genres'    => movie_elite_get_all_genres(),
+        'countries' => movie_elite_get_all_countries(),
+        'years'     => movie_elite_get_all_release_years(),
+        'qualities' => movie_elite_get_all_qualities(),
+    ));
 }
 add_action('wp_enqueue_scripts', 'movie_elite_enqueue_scripts');
 
@@ -324,3 +403,84 @@ function movie_elite_ajax_alphabet_filter_handler() {
 }
 add_action('wp_ajax_movie_elite_alphabet_filter', 'movie_elite_ajax_alphabet_filter_handler');
 add_action('wp_ajax_nopriv_movie_elite_alphabet_filter', 'movie_elite_ajax_alphabet_filter_handler');
+
+/**
+ * Render Reusable Advanced Filter Bar Component
+ */
+function movie_elite_render_filter_bar($preselect_ptype = '') {
+    $genres    = movie_elite_get_all_genres();
+    $countries = movie_elite_get_all_countries();
+    $years     = movie_elite_get_all_release_years();
+    $qualities = movie_elite_get_all_qualities();
+    ?>
+    <section class="alphabet-filter-section" style="margin-bottom: 25px;">
+        <div class="container">
+            <div class="alphabet-bar" style="margin-bottom:14px;">
+                <span class="alphabet-label"><i class="fa-solid fa-arrow-down-a-z"></i> BROWSE BY A-Z:</span>
+                <div class="alphabet-links">
+                    <button type="button" class="alphabet-btn active" data-letter="ALL">ALL</button>
+                    <button type="button" class="alphabet-btn" data-letter="#">#</button>
+                    <?php foreach (range('A', 'Z') as $char) : ?>
+                        <button type="button" class="alphabet-btn" data-letter="<?php echo $char; ?>"><?php echo $char; ?></button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Advanced Filter Accordion / Bar -->
+            <div id="me-advanced-filter-bar" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:14px 18px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+                <span style="font-size:0.85rem; font-weight:800; color:var(--accent-cyan); display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-filter"></i> FILTER:
+                </span>
+                <select id="me-filter-ptype" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Types (Movies & Shows)</option>
+                    <option value="movies" <?php selected($preselect_ptype, 'movies'); ?>>Movies Only</option>
+                    <option value="tvshows" <?php selected($preselect_ptype, 'tvshows'); ?>>TV Shows / Dramas</option>
+                </select>
+                <select id="me-filter-genre" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Genres</option>
+                    <?php foreach ($genres as $g) : ?>
+                        <option value="<?php echo esc_attr($g['slug']); ?>"><?php echo esc_html($g['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="me-filter-country" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Countries</option>
+                    <?php foreach ($countries as $c) : ?>
+                        <option value="<?php echo esc_attr($c['slug']); ?>"><?php echo esc_html($c['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="me-filter-year" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Years</option>
+                    <?php foreach ($years as $y) : ?>
+                        <option value="<?php echo esc_attr($y); ?>"><?php echo esc_html($y); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="me-filter-quality" class="alphabet-btn" style="padding:6px 12px; background:var(--bg-card); color:#fff; border:1px solid var(--border-color); font-size:0.85rem;">
+                    <option value="">All Qualities</option>
+                    <?php foreach ($qualities as $q) : ?>
+                        <option value="<?php echo esc_attr($q); ?>"><?php echo esc_html($q); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" id="me-filter-reset" class="alphabet-btn" style="background:rgba(255,255,255,0.08); color:var(--text-muted);">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+
+            <!-- Filter Results Container -->
+            <div id="me-filter-results-container" style="display:none; margin-top:24px; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px;">
+                    <h3 style="font-size:1.1rem; font-weight:800; color:var(--accent-cyan); display:flex; align-items:center; gap:8px; margin:0;">
+                        <i class="fa-solid fa-sliders"></i> Filtered Results (<span id="me-filter-count">0</span>)
+                    </h3>
+                    <button type="button" id="me-filter-close" class="alphabet-btn" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid #ef4444; padding:6px 12px; font-size:0.82rem;">
+                        <i class="fa-solid fa-xmark"></i> Clear Filter Results
+                    </button>
+                </div>
+                <div id="me-filter-loading" style="display:none; justify-content:center; align-items:center; padding:40px; color:var(--accent-cyan); gap:10px; font-weight:700;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i> Searching catalog...
+                </div>
+                <div id="me-filter-results" class="movies-grid"></div>
+            </div>
+        </div>
+    </section>
+    <?php
+}

@@ -227,78 +227,136 @@ function initAdvancedFilter() {
     var filterBar = document.getElementById('me-advanced-filter-bar');
     if (!filterBar) return;
 
+    var ptypeSelect   = document.getElementById('me-filter-ptype');
     var genreSelect   = document.getElementById('me-filter-genre');
     var countrySelect = document.getElementById('me-filter-country');
     var yearSelect    = document.getElementById('me-filter-year');
+    var qualitySelect = document.getElementById('me-filter-quality');
+    var resetBtn      = document.getElementById('me-filter-reset');
 
-    if (genreSelect && ME.genres && genreSelect.options.length <= 1) {
-        ME.genres.forEach(function(g) {
-            var opt = new Option(g.name, g.slug);
-            genreSelect.appendChild(opt);
+    var resultsContainer = document.getElementById('me-filter-results-container');
+    var resultGrid       = document.getElementById('me-filter-results');
+    var loadingEl        = document.getElementById('me-filter-loading');
+    var countEl          = document.getElementById('me-filter-count');
+    var closeBtn         = document.getElementById('me-filter-close');
+
+    var currentLetter = 'ALL';
+    var data = typeof meFeatures !== 'undefined' ? meFeatures : (typeof movie_elite_ajax !== 'undefined' ? movie_elite_ajax : {});
+
+    // Dynamic dropdown populator if dropdown options are not populated by PHP
+    if (genreSelect && data.genres && genreSelect.options.length <= 1) {
+        data.genres.forEach(function(g) {
+            genreSelect.appendChild(new Option(g.name, g.slug));
         });
     }
-    if (countrySelect && ME.countries && countrySelect.options.length <= 1) {
-        ME.countries.forEach(function(c) {
-            var opt = new Option(c.name, c.slug);
-            countrySelect.appendChild(opt);
+    if (countrySelect && data.countries && countrySelect.options.length <= 1) {
+        data.countries.forEach(function(c) {
+            countrySelect.appendChild(new Option(c.name, c.slug));
         });
     }
-    if (yearSelect && ME.years && yearSelect.options.length <= 1) {
-        ME.years.forEach(function(y) {
-            var opt = new Option(y, y);
-            yearSelect.appendChild(opt);
+    if (yearSelect && data.years && yearSelect.options.length <= 1) {
+        data.years.forEach(function(y) {
+            yearSelect.appendChild(new Option(y, y));
+        });
+    }
+    if (qualitySelect && data.qualities && qualitySelect.options.length <= 1) {
+        data.qualities.forEach(function(q) {
+            qualitySelect.appendChild(new Option(q, q));
         });
     }
 
-    var resultGrid = document.getElementById('me-filter-results');
-    var loadingEl  = document.getElementById('me-filter-loading');
     var filterTimeout = null;
 
     function doFilter(page) {
         page = page || 1;
+        var ptype   = ptypeSelect   ? ptypeSelect.value   : '';
+        var genre   = genreSelect   ? genreSelect.value   : '';
+        var country = countrySelect ? countrySelect.value : '';
+        var year    = yearSelect    ? yearSelect.value    : '';
+        var quality = qualitySelect ? qualitySelect.value : '';
+
+        // If no filter is selected and letter is ALL, hide results container
+        if (!ptype && !genre && !country && !year && !quality && currentLetter === 'ALL') {
+            if (resultsContainer) resultsContainer.style.display = 'none';
+            return;
+        }
+
+        if (resultsContainer) resultsContainer.style.display = 'block';
         if (loadingEl) loadingEl.style.display = 'flex';
         if (resultGrid) resultGrid.style.opacity = '0.4';
+
+        var ajaxUrl = data.ajaxurl || data.ajax_url || (typeof AJAX !== 'undefined' ? AJAX : '/wp-admin/admin-ajax.php');
         var fd = new FormData();
-        fd.append('action', 'movie_elite_advanced_filter');
-        fd.append('nonce',   ME.nonce || '');
-        fd.append('genre',   genreSelect   ? genreSelect.value   : '');
-        fd.append('country', countrySelect ? countrySelect.value : '');
-        fd.append('year',    yearSelect    ? yearSelect.value    : '');
-        fd.append('quality', document.getElementById('me-filter-quality') ? document.getElementById('me-filter-quality').value : '');
-        fd.append('ptype',   document.getElementById('me-filter-ptype')   ? document.getElementById('me-filter-ptype').value   : '');
-        fd.append('paged',   page);
-        fetch(AJAX, {method:'POST',body:fd})
-            .then(function(r){ return r.json(); })
+        fd.append('action',  'movie_elite_advanced_filter');
+        fd.append('nonce',    data.nonce || '');
+        fd.append('ptype',    ptype);
+        fd.append('genre',    genre);
+        fd.append('country',  country);
+        fd.append('year',     year);
+        fd.append('quality',  quality);
+        fd.append('letter',   currentLetter);
+        fd.append('paged',    page);
+
+        fetch(ajaxUrl, { method: 'POST', body: fd })
+            .then(function(r) { return r.json(); })
             .then(function(resp) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (resultGrid) {
                     resultGrid.style.opacity = '1';
-                    if (resp.success) { resultGrid.innerHTML = resp.data.html; }
+                    if (resp.success) {
+                        resultGrid.innerHTML = resp.data.html;
+                        if (countEl) countEl.textContent = resp.data.total || 0;
+                    }
                 }
-                initWatchlistButtons();
+                if (typeof initWatchlistButtons === 'function') {
+                    initWatchlistButtons();
+                }
             })
-            .catch(function() {
+            .catch(function(err) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (resultGrid) resultGrid.style.opacity = '1';
             });
     }
 
+    // Bind dropdown change handlers
     filterBar.querySelectorAll('select').forEach(function(sel) {
         sel.addEventListener('change', function() {
             clearTimeout(filterTimeout);
-            filterTimeout = setTimeout(function() { doFilter(1); }, 200);
+            filterTimeout = setTimeout(function() { doFilter(1); }, 150);
         });
     });
 
-    var resetBtn = document.getElementById('me-filter-reset');
+    // Bind A-Z letter buttons
+    document.querySelectorAll('.alphabet-btn[data-letter]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.alphabet-btn[data-letter]').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            currentLetter = btn.getAttribute('data-letter') || 'ALL';
+            doFilter(1);
+        });
+    });
+
+    // Reset button handler
     if (resetBtn) {
         resetBtn.addEventListener('click', function() {
-            filterBar.querySelectorAll('select').forEach(function(s){ s.value = ''; });
-            doFilter(1);
+            currentLetter = 'ALL';
+            document.querySelectorAll('.alphabet-btn[data-letter]').forEach(function(b) { b.classList.remove('active'); });
+            var firstLetterBtn = document.querySelector('.alphabet-btn[data-letter="ALL"]');
+            if (firstLetterBtn) firstLetterBtn.classList.add('active');
+
+            filterBar.querySelectorAll('select').forEach(function(s) { s.value = ''; });
+            if (resultsContainer) resultsContainer.style.display = 'none';
         });
     }
 
-    doFilter(1);
+    // Close results handler
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            currentLetter = 'ALL';
+            filterBar.querySelectorAll('select').forEach(function(s) { s.value = ''; });
+            if (resultsContainer) resultsContainer.style.display = 'none';
+        });
+    }
 }
 
 // ═══ COMING SOON COUNTDOWN ═══

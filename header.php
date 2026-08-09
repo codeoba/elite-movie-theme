@@ -10,12 +10,12 @@
 <?php wp_body_open(); ?>
 
 <?php
-// Fetch Genres for dropdown
-$nav_genres_terms = get_terms(array('taxonomy' => 'genre', 'hide_empty' => false));
+// Dynamic Genres for header dropdown
+$genres_raw = function_exists('movie_elite_get_all_genres') ? movie_elite_get_all_genres() : array();
 $nav_genres = array();
-if (!is_wp_error($nav_genres_terms) && !empty($nav_genres_terms)) {
-    foreach ($nav_genres_terms as $gt) {
-        $nav_genres[$gt->name] = $gt->slug;
+if (!empty($genres_raw)) {
+    foreach ($genres_raw as $g_item) {
+        $nav_genres[$g_item['name']] = $g_item['slug'];
     }
 } else {
     $nav_genres = array(
@@ -28,12 +28,12 @@ if (!is_wp_error($nav_genres_terms) && !empty($nav_genres_terms)) {
     );
 }
 
-// Fetch Countries for dropdown
-$nav_countries_terms = get_terms(array('taxonomy' => 'country', 'hide_empty' => false));
+// Dynamic Countries for header dropdown
+$countries_raw = function_exists('movie_elite_get_all_countries') ? movie_elite_get_all_countries() : array();
 $nav_countries = array();
-if (!is_wp_error($nav_countries_terms) && !empty($nav_countries_terms)) {
-    foreach ($nav_countries_terms as $ct) {
-        $nav_countries[$ct->name] = $ct->slug;
+if (!empty($countries_raw)) {
+    foreach ($countries_raw as $c_item) {
+        $nav_countries[$c_item['name']] = $c_item['slug'];
     }
 } else {
     $nav_countries = array(
@@ -44,8 +44,8 @@ if (!is_wp_error($nav_countries_terms) && !empty($nav_countries_terms)) {
     );
 }
 
-// Years list for dropdown
-$nav_years = array('2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015');
+// Dynamic Release Years from Database
+$nav_years = function_exists('movie_elite_get_all_release_years') ? movie_elite_get_all_release_years() : array('2026', '2025', '2024', '2023', '2022');
 ?>
 
 <header class="site-header">

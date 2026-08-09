@@ -243,12 +243,13 @@ function movie_elite_ajax_advanced_filter() {
     $year    = sanitize_text_field($_POST["year"]    ?? "");
     $quality = sanitize_text_field($_POST["quality"] ?? "");
     $ptype   = sanitize_text_field($_POST["ptype"]   ?? "");
+    $letter  = sanitize_text_field($_POST["letter"]  ?? "");
     $page    = max(1, intval($_POST["paged"] ?? 1));
 
     $args = [
         "post_type"      => $ptype === "tvshows" ? ["tvshows"] : ($ptype === "movies" ? ["movies"] : ["movies","tvshows"]),
         "post_status"    => "publish",
-        "posts_per_page" => 20,
+        "posts_per_page" => 24,
         "paged"          => $page,
         "orderby"        => "date",
         "order"          => "DESC",
@@ -259,8 +260,22 @@ function movie_elite_ajax_advanced_filter() {
     if (!empty($country)) $tax_query[] = ["taxonomy"=>"country","field"=>"slug","terms"=>$country];
     if (count($tax_query) > 1) $args["tax_query"] = $tax_query;
 
-    if (!empty($year))    $args["meta_query"][] = ["key"=>"release_year","value"=>$year,"compare"=>"="];
-    if (!empty($quality)) $args["meta_query"][] = ["key"=>"movie_quality","value"=>$quality,"compare"=>"LIKE"];
+    $meta_query = ["relation"=>"AND"];
+    if (!empty($year))    $meta_query[] = ["key"=>"release_year","value"=>$year,"compare"=>"="];
+    if (!empty($quality)) $meta_query[] = ["key"=>"movie_quality","value"=>$quality,"compare"=>"LIKE"];
+    if (count($meta_query) > 1) $args["meta_query"] = $meta_query;
+
+    if (!empty($letter) && $letter !== 'ALL') {
+        add_filter('posts_where', function($where, $query) use ($letter) {
+            global $wpdb;
+            if ($letter === '#') {
+                $where .= " AND {$wpdb->posts}.post_title REGEXP '^[0-9]'";
+            } else {
+                $where .= $wpdb->prepare(" AND {$wpdb->posts}.post_title LIKE %s", $wpdb->esc_like($letter) . '%');
+            }
+            return $where;
+        }, 10, 2);
+    }
 
     $q = new WP_Query($args);
     ob_start();
@@ -268,7 +283,7 @@ function movie_elite_ajax_advanced_filter() {
         while ($q->have_posts()) { $q->the_post(); movie_elite_render_card_item(); }
         wp_reset_postdata();
     } else {
-        echo "<div style=\"grid-column:1/-1;padding:40px;text-align:center;color:var(--text-muted);\"><i class=\"fa-solid fa-film\" style=\"font-size:2rem;opacity:0.3;\"></i><br><br>No movies found for selected filters. Try different options.</div>";
+        echo "<div style=\"grid-column:1/-1;padding:40px;text-align:center;color:var(--text-muted);\"><i class=\"fa-solid fa-film\" style=\"font-size:2.2rem;opacity:0.3;margin-bottom:10px;display:block;\"></i>No titles found matching your filter criteria. Try selecting different options.</div>";
     }
     wp_send_json_success(["html"=>ob_get_clean(),"total"=>$q->found_posts,"pages"=>$q->max_num_pages]);
 }
