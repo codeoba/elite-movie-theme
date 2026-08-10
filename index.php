@@ -37,6 +37,8 @@ $hero_query = new WP_Query(array(
                             $backdrop = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200&auto=format&fit=crop&q=80';
                         }
 
+                        $genres = get_the_terms($post_id, 'genre');
+                        $genre_names = (!empty($genres) && !is_wp_error($genres)) ? wp_list_pluck($genres, 'name') : array('Trending');
                         $trailer_url = get_post_meta($post_id, 'youtube_trailer_id', true) ?: get_post_meta($post_id, 'trailer_url', true);
                 ?>
                 <div class="slide-item <?php echo ($slide_index === 1) ? 'active' : ''; ?>" style="background-image: url('<?php echo esc_url($backdrop); ?>');">
