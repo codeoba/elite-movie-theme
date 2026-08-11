@@ -184,6 +184,22 @@ function movie_elite_importer_page_render() {
         var totalPages  = 1;
         var currentItems = [];
 
+        window.handleTmdbImgError = function(img) {
+            var rawPath = img.getAttribute('data-path');
+            var currentSrc = img.src || '';
+
+            if (rawPath && currentSrc.indexOf('wsrv.nl') === -1) {
+                var cleanPath = rawPath.indexOf('/') === 0 ? rawPath : '/' + rawPath;
+                img.src = 'https://wsrv.nl/?url=https://image.tmdb.org/t/p/w500' + cleanPath;
+            } else if (rawPath && currentSrc.indexOf('w342') === -1) {
+                var cleanPath = rawPath.indexOf('/') === 0 ? rawPath : '/' + rawPath;
+                img.src = 'https://image.tmdb.org/t/p/w342' + cleanPath;
+            } else {
+                img.onerror = null;
+                img.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300';
+            }
+        };
+
         function getPosterUrl(path) {
             if (!path) return 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300';
             if (path.indexOf('http') === 0) return path;
@@ -285,8 +301,9 @@ function movie_elite_importer_page_render() {
                     html += '<span style="position:absolute; top:8px; right:8px; background:#00c853; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:12px; z-index:2;">✅ IMPORTED</span>';
                 }
 
-                html += '<div style="position:relative; width:100%; height:230px; border-radius:6px; overflow:hidden; background:#e2e8f0;">';
-                html += '<img src="' + poster + '" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300\';" style="width:100%; height:100%; object-fit:cover; display:block;" alt="' + itemTitle + '" />';
+                var imgPath = m.poster_path || m.backdrop_path || '';
+                html += '<div style="position:relative; width:100%; height:230px; border-radius:6px; overflow:hidden; background:#1e293b;">';
+                html += '<img src="' + poster + '" data-path="' + imgPath + '" loading="lazy" onerror="handleTmdbImgError(this);" style="width:100%; height:100%; object-fit:cover; display:block;" alt="' + itemTitle + '" />';
                 html += '</div>';
 
                 html += '<h4 style="font-size:0.85rem; margin:10px 0 4px; line-height:1.2; height:32px; overflow:hidden;">' + itemTitle + '</h4>';

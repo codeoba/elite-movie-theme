@@ -340,7 +340,7 @@ function movie_elite_render_card_item() {
     <div class="movie-card" data-title="<?php echo esc_attr($title); ?>">
         <div class="card-poster">
             <a href="<?php echo esc_url($permalink); ?>">
-                <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" />
+                <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" onerror="if(this.src.indexOf('wsrv.nl')===-1 &amp;&amp; this.src.indexOf('image.tmdb.org')!==-1){ this.src='https://wsrv.nl/?url='+encodeURIComponent(this.src); } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&amp;auto=format&amp;fit=crop&amp;q=80'; }" />
                 <span class="card-imdb-score"><i class="fa-solid fa-star"></i> <?php echo esc_html($rating); ?></span>
                 <span class="card-quality-badge"><?php echo esc_html($quality); ?></span>
                 <?php if (!empty($drama_status)) : ?>
