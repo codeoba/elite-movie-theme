@@ -811,10 +811,10 @@ function movie_elite_embed_manager_page_render() {
     }
 
     $servers = get_option('movie_elite_custom_embed_servers', array(
-        array('name' => 'Server 1 (AutoEmbed)', 'url' => 'https://autoembed.cc/embed/movie/{imdb_id}'),
+        array('name' => 'Server 1 (VidSrc ME)',  'url' => 'https://vidsrc.me/embed/movie/{imdb_id}'),
         array('name' => 'Server 2 (VidSrc PRO)', 'url' => 'https://vidsrc.to/embed/movie/{imdb_id}'),
-        array('name' => 'Server 3 (VidSrc ME)',  'url' => 'https://vidsrc.me/embed/movie/{imdb_id}'),
-        array('name' => 'Server 4 (SuperEmbed)', 'url' => 'https://multiembed.mov/directstream.php?video_id={imdb_id}')
+        array('name' => 'Server 3 (SuperEmbed)', 'url' => 'https://multiembed.mov/directstream.php?video_id={imdb_id}'),
+        array('name' => 'Server 4 (AutoEmbed)',  'url' => 'https://autoembed.cc/embed/movie/{imdb_id}')
     ));
     ?>
     <div class="wrap" style="max-width:1200px;">

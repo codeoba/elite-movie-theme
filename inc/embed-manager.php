@@ -21,8 +21,8 @@ function movie_elite_get_embed_servers() {
         $custom_servers = array(
             'server_1' => array(
                 'id'       => 'server_1',
-                'name'     => 'Server 1 (VidSrc Pro)',
-                'pattern'  => 'https://vidsrc.to/embed/movie/{imdb_id}',
+                'name'     => 'Server 1 (VidSrc ME)',
+                'pattern'  => 'https://vidsrc.me/embed/movie/{imdb_id}',
                 'type'     => 'imdb',
                 'status'   => 'active',
                 'order'    => 1
