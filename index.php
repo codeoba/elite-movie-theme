@@ -129,6 +129,9 @@ $hero_query = new WP_Query(array(
 
     <!-- Dynamic Section Blocks -->
     <div class="container">
+        <!-- Homepage Tabbed Content Switcher (Trending, Now Playing, Coming Soon, Top Rated) -->
+        <?php if (function_exists('movie_elite_render_homepage_tabs_switcher')) movie_elite_render_homepage_tabs_switcher(); ?>
+
         <?php
         $blocks = movie_elite_get_homepage_blocks();
 

@@ -343,7 +343,17 @@ function movie_elite_render_card_item() {
                 <img src="<?php echo esc_url($poster); ?>" alt="<?php echo esc_attr($title); ?>" loading="lazy" onerror="if(this.src.indexOf('wsrv.nl')===-1 &amp;&amp; this.src.indexOf('image.tmdb.org')!==-1){ this.src='https://wsrv.nl/?url='+encodeURIComponent(this.src); } else { this.onerror=null; this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500&amp;auto=format&amp;fit=crop&amp;q=80'; }" />
                 <span class="card-imdb-score"><i class="fa-solid fa-star"></i> <?php echo esc_html($rating); ?></span>
                 <span class="card-quality-badge"><?php echo esc_html($quality); ?></span>
-                <?php if (!empty($drama_status)) : ?>
+                <?php
+                $is_now_playing = get_post_meta($post_id, '_is_now_playing', true);
+                $release_date   = get_post_meta($post_id, '_release_date', true);
+                
+                if (!empty($is_now_playing)) : ?>
+                    <span class="card-status-badge ongoing" style="background:#0284c7;"><i class="fa-solid fa-clapperboard"></i> NOW PLAYING</span>
+                <?php elseif (!empty($release_date) && strtotime($release_date) > time()) : 
+                    $diff_days = ceil((strtotime($release_date) - time()) / 86400);
+                ?>
+                    <span class="card-status-badge ongoing" style="background:#f59e0b; color:#000;"><i class="fa-solid fa-clock"></i> In <?php echo $diff_days; ?> Days</span>
+                <?php elseif (!empty($drama_status)) : ?>
                     <?php if (strcasecmp($drama_status, 'ongoing') === 0) : ?>
                         <span class="card-status-badge ongoing"><i class="fa-solid fa-spinner fa-spin-pulse"></i> ONGOING</span>
                     <?php else : ?>
@@ -841,3 +851,126 @@ function movie_elite_embed_manager_page_render() {
     </div>
     <?php
 }
+
+/**
+ * Render Homepage Dynamic Tab Switcher (Trending, Now Playing, Coming Soon, Top Rated)
+ */
+function movie_elite_render_homepage_tabs_switcher() {
+    ?>
+    <section class="home-block-section" style="margin-bottom:40px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:15px; border-bottom:2px solid rgba(255,255,255,0.06); padding-bottom:15px;">
+            <h2 class="section-title" style="margin:0; font-size:1.4rem; display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid fa-layer-group" style="color:var(--accent-cyan);"></i> Explore Content
+            </h2>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;" id="me-home-tabs-bar">
+                <button type="button" class="me-home-tab-btn active" data-tab="trending" style="background:linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color:#000; font-weight:800; border:none; padding:8px 18px; border-radius:20px; cursor:pointer; font-size:0.88rem; transition:all 0.2s;">
+                    <i class="fa-solid fa-fire"></i> 🔥 Trending Now
+                </button>
+                <button type="button" class="me-home-tab-btn" data-tab="now_playing" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border-color); padding:8px 18px; border-radius:20px; cursor:pointer; font-size:0.88rem; transition:all 0.2s;">
+                    <i class="fa-solid fa-clapperboard"></i> 🎬 Now Playing
+                </button>
+                <button type="button" class="me-home-tab-btn" data-tab="coming_soon" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border-color); padding:8px 18px; border-radius:20px; cursor:pointer; font-size:0.88rem; transition:all 0.2s;">
+                    <i class="fa-solid fa-clock"></i> ⌛ Coming Next Week
+                </button>
+                <button type="button" class="me-home-tab-btn" data-tab="top_rated" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border-color); padding:8px 18px; border-radius:20px; cursor:pointer; font-size:0.88rem; transition:all 0.2s;">
+                    <i class="fa-solid fa-star"></i> ⭐ Top Rated
+                </button>
+            </div>
+        </div>
+
+        <div class="movies-grid" id="me-home-tabs-grid">
+            <?php
+            $query = new WP_Query(array(
+                'post_type'      => array('movies', 'tvshows'),
+                'post_status'    => 'publish',
+                'posts_per_page' => 12,
+                'orderby'        => 'date',
+                'order'          => 'DESC'
+            ));
+            if ($query->have_posts()) {
+                while ($query->have_posts()) {
+                    $query->the_post();
+                    movie_elite_render_card_item(get_the_ID());
+                }
+                wp_reset_postdata();
+            }
+            ?>
+        </div>
+    </section>
+
+    <script type="text/javascript">
+    jQuery(document).ready(function($) {
+        $('.me-home-tab-btn').on('click', function() {
+            var btn = $(this);
+            var tab = btn.data('tab');
+            $('.me-home-tab-btn').removeClass('active').css({ 'background': 'rgba(255,255,255,0.06)', 'color': '#fff', 'border': '1px solid var(--border-color)' });
+            btn.addClass('active').css({ 'background': 'linear-gradient(135deg, var(--accent-cyan), var(--accent-blue))', 'color': '#000', 'border': 'none' });
+
+            $('#me-home-tabs-grid').css('opacity', '0.4');
+
+            $.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+                action: 'movie_elite_load_homepage_tab',
+                tab: tab
+            }, function(resp) {
+                $('#me-home-tabs-grid').css('opacity', '1');
+                if (resp.success && resp.data.html) {
+                    $('#me-home-tabs-grid').html(resp.data.html);
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+}
+
+/**
+ * AJAX Handler: Load Homepage Tab Content
+ */
+function movie_elite_ajax_load_homepage_tab() {
+    $tab = isset($_POST['tab']) ? sanitize_text_field($_POST['tab']) : 'trending';
+    
+    $args = array(
+        'post_type'      => array('movies', 'tvshows'),
+        'post_status'    => 'publish',
+        'posts_per_page' => 12
+    );
+
+    if ($tab === 'now_playing') {
+        $args['meta_query'] = array(
+            'relation' => 'OR',
+            array('key' => '_is_now_playing', 'value' => '1', 'compare' => '='),
+            array('key' => 'release_year', 'value' => date('Y'), 'compare' => '=')
+        );
+    } elseif ($tab === 'coming_soon') {
+        $args['meta_query'] = array(
+            array('key' => '_release_date', 'value' => date('Y-m-d'), 'compare' => '>=')
+        );
+        $args['meta_key'] = '_release_date';
+        $args['orderby']  = 'meta_value';
+        $args['order']    = 'ASC';
+    } elseif ($tab === 'top_rated') {
+        $args['meta_key'] = 'imdb_rating';
+        $args['orderby']  = 'meta_value_num';
+        $args['order']    = 'DESC';
+    } else {
+        $args['orderby'] = 'date';
+        $args['order']   = 'DESC';
+    }
+
+    $query = new WP_Query($args);
+    ob_start();
+    if ($query->have_posts()) {
+        while ($query->have_posts()) {
+            $query->the_post();
+            movie_elite_render_card_item(get_the_ID());
+        }
+        wp_reset_postdata();
+    } else {
+        echo '<p style="grid-column:1/-1; color:#94a3b8; text-align:center; padding:40px 0;">Hakuna yaliyomo yaliyopatikana kwa tab hii.</p>';
+    }
+    $html = ob_get_clean();
+
+    wp_send_json_success(array('html' => $html));
+}
+add_action('wp_ajax_movie_elite_load_homepage_tab', 'movie_elite_ajax_load_homepage_tab');
+add_action('wp_ajax_nopriv_movie_elite_load_homepage_tab', 'movie_elite_ajax_load_homepage_tab');

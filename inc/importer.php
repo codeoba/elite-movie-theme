@@ -545,6 +545,14 @@ function movie_elite_ajax_import_handler() {
         update_post_meta($post_id, 'total_seasons', $seasons);
         update_post_meta($post_id, 'total_episodes', $episodes);
 
+        $rel_date = $m['release_date'] ?? $m['first_air_date'] ?? '';
+        if (!empty($rel_date)) {
+            update_post_meta($post_id, '_release_date', $rel_date);
+            if (strtotime($rel_date) <= time()) {
+                update_post_meta($post_id, '_is_now_playing', '1');
+            }
+        }
+
         // Assign genres
         if (!empty($m['genres'])) {
             $genre_names = array_column($m['genres'], 'name');
