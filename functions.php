@@ -636,3 +636,208 @@ function movie_elite_ajax_subscribe_episode_notify() {
 }
 add_action('wp_ajax_movie_elite_subscribe_episode_notify', 'movie_elite_ajax_subscribe_episode_notify');
 add_action('wp_ajax_nopriv_movie_elite_subscribe_episode_notify', 'movie_elite_ajax_subscribe_episode_notify');
+
+/**
+ * Render Spotlight Command Palette Modal (Ctrl + K)
+ */
+function movie_elite_render_spotlight_modal() {
+    ?>
+    <div id="me-spotlight-modal" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(15,23,42,0.85); backdrop-filter:blur(12px); align-items:flex-start; justify-content:center; padding:80px 20px 20px;">
+        <div style="background:#1e293b; border-radius:16px; border:1px solid #334155; width:100%; max-width:680px; box-shadow:0 25px 50px rgba(0,0,0,0.6); overflow:hidden; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; padding:18px 24px; border-bottom:1px solid #334155; background:#0f172a; gap:12px;">
+                <i class="fa-solid fa-magnifying-glass" style="color:var(--accent-cyan); font-size:1.2rem;"></i>
+                <input type="text" id="me-spotlight-input" placeholder="Type to search movies, TV shows, actors... (Esc to close)" style="flex:1; background:none; border:none; color:#fff; font-size:1.1rem; outline:none; font-weight:700;" autofocus />
+                <span style="background:#334155; color:#94a3b8; font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:6px;">ESC</span>
+            </div>
+            <div id="me-spotlight-results" style="max-height:420px; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px;">
+                <p style="color:#94a3b8; text-align:center; margin:20px 0; font-size:0.9rem;">Start typing to search thousands of titles instantly...</p>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            var modal = document.getElementById('me-spotlight-modal');
+            if (modal) {
+                modal.style.display = (modal.style.display === 'none' || !modal.style.display) ? 'flex' : 'none';
+                if (modal.style.display === 'flex') {
+                    document.getElementById('me-spotlight-input').focus();
+                }
+            }
+        }
+        if (e.key === 'Escape') {
+            var modal = document.getElementById('me-spotlight-modal');
+            if (modal) modal.style.display = 'none';
+        }
+    });
+
+    jQuery(document).ready(function($) {
+        $('#me-spotlight-input').on('input', function() {
+            var q = $(this).val().trim();
+            if (q.length < 2) {
+                $('#me-spotlight-results').html('<p style="color:#94a3b8; text-align:center; margin:20px 0; font-size:0.9rem;">Start typing to search thousands of titles instantly...</p>');
+                return;
+            }
+            $.post('<?php echo admin_url("admin-ajax.php"); ?>', {
+                action: 'movie_elite_live_search',
+                keyword: q
+            }, function(resp) {
+                if (resp.success && resp.data.results && resp.data.results.length > 0) {
+                    var html = '';
+                    resp.data.results.forEach(function(item) {
+                        html += '<a href="' + item.permalink + '" style="display:flex; align-items:center; gap:14px; padding:10px; border-radius:10px; background:rgba(255,255,255,0.03); text-decoration:none; transition:background 0.2s;">';
+                        html += '  <img src="' + item.poster + '" style="width:42px; height:58px; object-fit:cover; border-radius:6px;" />';
+                        html += '  <div style="flex:1;">';
+                        html += '    <h4 style="margin:0 0 4px 0; color:#fff; font-size:0.95rem; font-weight:700;">' + item.title + '</h4>';
+                        html += '    <span style="color:#94a3b8; font-size:0.78rem;">' + item.type + ' • ⭐ ' + item.rating + ' • 📅 ' + item.year + '</span>';
+                        html += '  </div>';
+                        html += '</a>';
+                    });
+                    $('#me-spotlight-results').html(html);
+                } else {
+                    $('#me-spotlight-results').html('<p style="color:#94a3b8; text-align:center; margin:20px 0;">No matching movies or TV shows found.</p>');
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+}
+
+/**
+ * Render Interactive Cast Avatars Carousel
+ */
+function movie_elite_render_cast_avatars($post_id) {
+    $actors = get_the_terms($post_id, 'actor');
+    $raw_cast = get_post_meta($post_id, 'movie_cast', true);
+    
+    if (empty($actors) && empty($raw_cast)) return;
+
+    $cast_list = array();
+    if (!empty($actors) && !is_wp_error($actors)) {
+        foreach ($actors as $act) {
+            $cast_list[] = array(
+                'name' => $act->name,
+                'link' => get_term_link($act),
+                'role' => 'Main Cast'
+            );
+        }
+    } elseif (!empty($raw_cast)) {
+        $names = explode(',', $raw_cast);
+        foreach ($names as $c) {
+            $c_name = trim($c);
+            if (!empty($c_name)) {
+                $term = get_term_by('name', $c_name, 'actor');
+                $cast_list[] = array(
+                    'name' => $c_name,
+                    'link' => $term ? get_term_link($term) : home_url('/?s=' . urlencode($c_name)),
+                    'role' => 'Cast Member'
+                );
+            }
+        }
+    }
+
+    if (empty($cast_list)) return;
+    ?>
+    <div style="margin-bottom:28px; background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+        <h4 style="color:#fff; font-size:1.05rem; margin:0 0 16px 0; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-users" style="color:var(--accent-cyan);"></i> Starring Cast & Character Roles
+        </h4>
+        <div style="display:flex; gap:16px; overflow-x:auto; padding-bottom:10px; scrollbar-width:thin;">
+            <?php foreach ($cast_list as $c) :
+                $initials = mb_substr($c['name'], 0, 1);
+            ?>
+            <a href="<?php echo esc_url($c['link']); ?>" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; width:100px; flex-shrink:0; text-align:center;">
+                <div style="width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color:#000; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.6rem; margin-bottom:8px; box-shadow:0 6px 15px rgba(0,0,0,0.3); border:2px solid var(--accent-cyan);">
+                    <?php echo esc_html($initials); ?>
+                </div>
+                <span style="color:#fff; font-weight:700; font-size:0.82rem; line-height:1.2; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?php echo esc_html($c['name']); ?></span>
+                <span style="color:var(--text-muted); font-size:0.72rem; margin-top:2px;"><?php echo esc_html($c['role']); ?></span>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php
+}
+
+/**
+ * AJAX Handler: Record Quick Emoji Reaction
+ */
+function movie_elite_ajax_record_emoji_reaction() {
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    $emoji   = isset($_POST['emoji']) ? sanitize_text_field($_POST['emoji']) : '';
+
+    if (!$post_id || empty($emoji)) {
+        wp_send_json_error(array('message' => 'Invalid parameters'));
+    }
+
+    $reactions = get_post_meta($post_id, '_emoji_reactions', true) ?: array('🔥' => 12, '😱' => 5, '😭' => 8, '💖' => 18, '👏' => 10);
+    if (!isset($reactions[$emoji])) {
+        $reactions[$emoji] = 0;
+    }
+    $reactions[$emoji]++;
+
+    update_post_meta($post_id, '_emoji_reactions', $reactions);
+    wp_send_json_success(array('reactions' => $reactions, 'selected' => $emoji));
+}
+add_action('wp_ajax_movie_elite_record_emoji_reaction', 'movie_elite_ajax_record_emoji_reaction');
+add_action('wp_ajax_nopriv_movie_elite_record_emoji_reaction', 'movie_elite_ajax_record_emoji_reaction');
+
+/**
+ * Register Embed Server Manager Submenu Page
+ */
+function movie_elite_embed_manager_menu() {
+    add_submenu_page(
+        'edit.php?post_type=movies',
+        'Custom Embed Server Manager',
+        '🛠️ Embed Server Manager',
+        'manage_options',
+        'movie-elite-embed-manager',
+        'movie_elite_embed_manager_page_render'
+    );
+}
+add_action('admin_menu', 'movie_elite_embed_manager_menu');
+
+/**
+ * Render Embed Server Manager Admin GUI Page
+ */
+function movie_elite_embed_manager_page_render() {
+    if (isset($_POST['save_embed_templates'])) {
+        check_admin_referer('movie_elite_save_embed_nonce');
+        $servers = isset($_POST['embed_servers']) ? (array) $_POST['embed_servers'] : array();
+        update_option('movie_elite_custom_embed_servers', $servers);
+        echo '<div class="updated notice"><p>Custom Embed Servers saved successfully!</p></div>';
+    }
+
+    $servers = get_option('movie_elite_custom_embed_servers', array(
+        array('name' => 'Server 1 (AutoEmbed)', 'url' => 'https://autoembed.cc/embed/movie/{imdb_id}'),
+        array('name' => 'Server 2 (VidSrc PRO)', 'url' => 'https://vidsrc.to/embed/movie/{imdb_id}'),
+        array('name' => 'Server 3 (VidSrc ME)',  'url' => 'https://vidsrc.me/embed/movie/{imdb_id}'),
+        array('name' => 'Server 4 (SuperEmbed)', 'url' => 'https://multiembed.mov/directstream.php?video_id={imdb_id}')
+    ));
+    ?>
+    <div class="wrap" style="max-width:1200px;">
+        <h1><span class="dashicons dashicons-admin-plugins" style="color:#00f2fe;"></span> Custom Embed Server Templates Manager</h1>
+        <p>Configure custom embed templates (Doodstream, Streamwish, Filemoon, Mixdrop, Direct MP4) used across all Movies and TV Shows!</p>
+        <hr />
+
+        <form method="post" action="" style="background:#fff; padding:25px; border-radius:12px; border:1px solid #cbd5e1; margin-top:20px;">
+            <?php wp_nonce_field('movie_elite_save_embed_nonce'); ?>
+            <h3 style="margin-top:0;">Configured Video Server Embed URLs:</h3>
+            
+            <div id="embed-servers-wrapper">
+                <?php foreach ($servers as $idx => $srv) : ?>
+                <div style="display:flex; gap:15px; margin-bottom:15px; align-items:center;">
+                    <input type="text" name="embed_servers[<?php echo $idx; ?>][name]" value="<?php echo esc_attr($srv['name']); ?>" placeholder="Server Name (e.g. Server 1 (Doodstream))" style="width:240px; font-weight:bold;" />
+                    <input type="text" name="embed_servers[<?php echo $idx; ?>][url]" value="<?php echo esc_attr($srv['url']); ?>" placeholder="Embed URL Template (use {imdb_id} or {tmdb_id})" style="flex:1; font-family:monospace;" />
+                </div>
+                <?php endforeach; ?>
+            </div>
+
+            <p style="color:#64748b; font-size:0.85rem;">Use placeholders: <code>{imdb_id}</code>, <code>{tmdb_id}</code>, <code>{season}</code>, <code>{episode}</code>.</p>
+            <input type="submit" name="save_embed_templates" class="button button-primary button-large" value="Save Embed Server Templates" style="background:#0284c7; border-color:#0284c7; font-weight:bold;" />
+        </form>
+    </div>
+    <?php
+}

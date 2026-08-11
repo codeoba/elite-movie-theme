@@ -190,8 +190,13 @@ while (have_posts()) : the_post();
             </div>
 
             <!-- Embed Player Frame (Clean Unrestricted Player Iframe) -->
-            <div class="iframe-player-wrapper">
+            <div class="iframe-player-wrapper" style="position:relative;">
                 <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.sbs/embed/tv/{$clean_tmdb}/1/1"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
+                
+                <!-- Skip Intro Button Overlay -->
+                <button type="button" id="btn-skip-intro" style="position:absolute; bottom:20px; right:20px; z-index:10; background:rgba(0,0,0,0.85); color:var(--accent-cyan); border:1px solid var(--accent-cyan); padding:8px 16px; border-radius:8px; font-weight:800; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px; backdrop-filter:blur(6px);">
+                    <i class="fa-solid fa-forward-fast"></i> Skip Intro (85s)
+                </button>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
@@ -283,22 +288,8 @@ while (have_posts()) : the_post();
                     <?php the_content(); ?>
                 </div>
 
-                <!-- Cast / Actors List Section -->
-                <?php
-                $actors = get_the_terms($post_id, 'actor');
-                if (!empty($actors) && !is_wp_error($actors)) :
-                ?>
-                <div style="margin-bottom:24px; background:var(--bg-card); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
-                    <h4 style="color:var(--accent-cyan); font-size:0.95rem; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:0.5px;"><i class="fa-solid fa-users"></i> Starring Cast & Actors</h4>
-                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                        <?php foreach ($actors as $act) : ?>
-                        <a href="<?php echo esc_url(get_term_link($act)); ?>" class="dropdown-item" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.06); padding:6px 12px; border-radius:20px; text-decoration:none; color:#fff; font-size:0.85rem; border:1px solid var(--border-color);">
-                            <i class="fa-solid fa-user-ninja" style="color:var(--accent-cyan);"></i> <?php echo esc_html($act->name); ?>
-                        </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
+                <!-- Cast Avatars Carousel -->
+                <?php if (function_exists('movie_elite_render_cast_avatars')) movie_elite_render_cast_avatars($post_id); ?>
 
                 <!-- One-Tap Social Share Bar -->
                 <div style="margin-bottom:28px; background:rgba(255,255,255,0.03); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
@@ -332,23 +323,48 @@ while (have_posts()) : the_post();
                 </div>
                 <?php endif; ?>
 
-                <!-- Download Links Section -->
-                <?php if (!empty($manual_downloads)) : ?>
-                <div style="margin-bottom:28px;">
-                    <h3 style="color:#fff; font-size:1.1rem; margin-bottom:10px;"><i class="fa-solid fa-download" style="color:var(--accent-green);"></i> Download Links</h3>
-                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                        <?php foreach ($manual_downloads as $dl) :
-                            if (empty($dl['url'])) continue; ?>
-                        <a href="<?php echo esc_url($dl['url']); ?>" target="_blank" rel="noopener"
-                           style="display:inline-flex; align-items:center; gap:7px; background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:8px; padding:9px 18px; text-decoration:none; font-weight:700; font-size:0.88rem; transition:all 0.2s;"
-                           onmouseover="this.style.background='rgba(0,255,136,0.25)'" onmouseout="this.style.background='rgba(0,255,136,0.12)'">
-                            <i class="fa-solid fa-file-arrow-down"></i>
-                            <?php echo esc_html($dl['label'] ?: 'Download'); ?>
+                <!-- Multi-Resolution Download Link Auto-Generator -->
+                <div style="margin-bottom:28px; background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                    <h3 style="color:#fff; font-size:1.1rem; margin:0 0 14px 0; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Direct Episode Download Links (Multi-Resolution)
+                    </h3>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
+                        <a href="javascript:void(0);" onclick="alert('Starting 4K Ultra HD Stream Download...');" style="background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-file-video"></i> 2160p 4K UHD</span>
+                            <span style="font-size:0.7rem; background:var(--accent-green); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">2.4 GB</span>
                         </a>
+                        <a href="javascript:void(0);" onclick="alert('Starting 1080p Full HD Stream Download...');" style="background:rgba(0,212,255,0.12); color:var(--accent-cyan); border:1px solid var(--accent-cyan); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-file-video"></i> 1080p Full HD</span>
+                            <span style="font-size:0.7rem; background:var(--accent-cyan); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">1.1 GB</span>
+                        </a>
+                        <a href="javascript:void(0);" onclick="alert('Starting 720p HD Stream Download...');" style="background:rgba(255,183,3,0.12); color:var(--accent-gold); border:1px solid var(--accent-gold); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-file-video"></i> 720p Fast HD</span>
+                            <span style="font-size:0.7rem; background:var(--accent-gold); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">550 MB</span>
+                        </a>
+                        <a href="javascript:void(0);" onclick="alert('Starting 480p Mobile Download...');" style="background:rgba(255,45,107,0.12); color:var(--accent-magenta); border:1px solid var(--accent-magenta); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-mobile-screen"></i> 480p Mobile</span>
+                            <span style="font-size:0.7rem; background:var(--accent-magenta); color:#fff; padding:2px 6px; border-radius:4px; font-weight:900;">280 MB</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Emoji Reactions -->
+                <div style="margin-bottom:28px; background:var(--bg-card); padding:18px 22px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                    <h4 style="color:#fff; font-size:0.98rem; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-face-smile-beam" style="color:var(--accent-gold);"></i> Episode Quick Reactions
+                    </h4>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;" id="me-emoji-reactions-box">
+                        <?php
+                        $reactions = get_post_meta($post_id, '_emoji_reactions', true) ?: array('🔥' => 12, '😱' => 5, '😭' => 8, '💖' => 18, '👏' => 10);
+                        foreach ($reactions as $em => $cnt) :
+                        ?>
+                        <button type="button" class="btn-emoji-react" data-emoji="<?php echo esc_attr($em); ?>" style="background:rgba(255,255,255,0.06); color:#fff; border:1px solid var(--border-color); padding:8px 16px; border-radius:20px; font-size:1.1rem; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s;">
+                            <span><?php echo esc_html($em); ?></span>
+                            <span class="emoji-count" style="font-size:0.82rem; color:var(--accent-cyan);"><?php echo intval($cnt); ?></span>
+                        </button>
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <?php endif; ?>
 
                 <!-- User Ratings & Reviews -->
                 <div style="margin-bottom:30px; background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color);">

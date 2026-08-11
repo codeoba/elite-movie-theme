@@ -67,6 +67,9 @@
 if (function_exists('movie_elite_render_mobile_bottom_nav')) {
     movie_elite_render_mobile_bottom_nav();
 }
+if (function_exists('movie_elite_render_spotlight_modal')) {
+    movie_elite_render_spotlight_modal();
+}
 wp_footer();
 ?>
 </body>
