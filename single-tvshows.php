@@ -26,6 +26,7 @@ while (have_posts()) : the_post();
     $rating    = get_post_meta($post_id, 'imdb_rating', true) ?: '8.8';
     $year      = get_post_meta($post_id, 'release_year', true) ?: '2026';
     $quality   = get_post_meta($post_id, 'movie_quality', true) ?: '4K UHD';
+    $status    = get_post_meta($post_id, '_drama_status', true) ?: 'Ongoing';
     $poster    = get_post_meta($post_id, 'poster_url', true);
     $backdrop  = get_post_meta($post_id, 'backdrop_url', true) ?: $poster;
 
@@ -311,7 +312,7 @@ while (have_posts()) : the_post();
                 </div>
 
                 <!-- Ongoing Drama Notify Me Button -->
-                <?php if ($status === 'Ongoing') : ?>
+                <?php if (!empty($status) && strcasecmp($status, 'ongoing') === 0) : ?>
                 <div style="margin-bottom:28px; background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(16,185,129,0.12)); padding:18px; border-radius:var(--radius-md); border:1px solid #f59e0b; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
                     <div>
                         <h4 style="color:#f59e0b; margin:0 0 4px 0; font-size:1rem; font-weight:800;"><i class="fa-solid fa-bell"></i> Ongoing Drama Alert</h4>
