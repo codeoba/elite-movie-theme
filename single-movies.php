@@ -91,6 +91,36 @@ while (have_posts()) : the_post();
         $srv_counter++;
     }
 
+    // Force VidSrc ME to be Server 1 (Index 0) for Movies
+    $vidsrc_me_url = "https://vidsrc.me/embed/movie/{$clean_imdb}";
+    $vidsrc_found_key = null;
+
+    foreach ($embeds as $k => $e) {
+        if (strpos($e['url'], 'vidsrc.me') !== false || strpos(strtolower($e['name']), 'vidsrc me') !== false) {
+            $vidsrc_found_key = $k;
+            break;
+        }
+    }
+
+    if ($vidsrc_found_key !== null) {
+        $vidsrc_item = $embeds[$vidsrc_found_key];
+        unset($embeds[$vidsrc_found_key]);
+        array_unshift($embeds, $vidsrc_item);
+    } else {
+        array_unshift($embeds, array('name' => 'Server 1 (VidSrc ME)', 'url' => $vidsrc_me_url));
+    }
+
+    // Re-index array and format server labels cleanly
+    $embeds = array_values($embeds);
+    $renumber = 1;
+    foreach ($embeds as &$eb) {
+        if (preg_match('/Server \d+/i', $eb['name'])) {
+            $eb['name'] = preg_replace('/Server \d+/i', 'Server ' . $renumber, $eb['name']);
+        }
+        $renumber++;
+    }
+    unset($eb);
+
     // Manual Download Links (meta)
     $manual_downloads = get_post_meta($post_id, 'manual_download_links', true);
     if (empty($manual_downloads) || !is_array($manual_downloads)) {

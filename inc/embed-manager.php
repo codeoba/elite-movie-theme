@@ -71,6 +71,19 @@ function movie_elite_get_embed_servers() {
         update_option('movie_elite_embed_servers', $custom_servers);
     }
 
+    // Force server_1 to be VidSrc ME
+    if (!isset($custom_servers['server_1']) || strpos($custom_servers['server_1']['pattern'] ?? '', 'vidsrc.me') === false) {
+        $custom_servers['server_1'] = array(
+            'id'       => 'server_1',
+            'name'     => 'Server 1 (VidSrc ME)',
+            'pattern'  => 'https://vidsrc.me/embed/movie/{imdb_id}',
+            'type'     => 'imdb',
+            'status'   => 'active',
+            'order'    => 1
+        );
+        update_option('movie_elite_embed_servers', $custom_servers);
+    }
+
     // Sort servers by order priority ascending
     uasort($custom_servers, function($a, $b) {
         $order_a = intval($a['order'] ?? 99);
