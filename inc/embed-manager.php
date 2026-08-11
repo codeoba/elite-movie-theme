@@ -84,22 +84,25 @@ function movie_elite_get_embed_servers() {
 /**
  * Register Admin Menu for Embed Manager
  */
-function movie_elite_embed_manager_menu() {
-    add_submenu_page(
-        'edit.php?post_type=movies',
-        'Embed Server Manager',
-        'Embed Source Manager',
-        'manage_options',
-        'movie-elite-embed-manager',
-        'movie_elite_embed_manager_page_render'
-    );
+if (!function_exists('movie_elite_embed_manager_menu')) {
+    function movie_elite_embed_manager_menu() {
+        add_submenu_page(
+            'edit.php?post_type=movies',
+            'Embed Server Manager',
+            'Embed Source Manager',
+            'manage_options',
+            'movie-elite-embed-manager',
+            'movie_elite_embed_manager_page_render'
+        );
+    }
+    add_action('admin_menu', 'movie_elite_embed_manager_menu');
 }
-add_action('admin_menu', 'movie_elite_embed_manager_menu');
 
 /**
  * Render Embed Source Manager Page with Order Controls
  */
-function movie_elite_embed_manager_page_render() {
+if (!function_exists('movie_elite_embed_manager_page_render')) {
+    function movie_elite_embed_manager_page_render() {
     if (isset($_POST['movie_elite_save_embeds']) && check_admin_referer('movie_elite_embed_nonce')) {
         $servers = movie_elite_get_embed_servers();
 
@@ -255,4 +258,5 @@ function movie_elite_embed_manager_page_render() {
         </form>
     </div>
     <?php
+    }
 }

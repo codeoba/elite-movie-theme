@@ -797,59 +797,63 @@ add_action('wp_ajax_nopriv_movie_elite_record_emoji_reaction', 'movie_elite_ajax
 /**
  * Register Embed Server Manager Submenu Page
  */
-function movie_elite_embed_manager_menu() {
-    add_submenu_page(
-        'edit.php?post_type=movies',
-        'Custom Embed Server Manager',
-        '🛠️ Embed Server Manager',
-        'manage_options',
-        'movie-elite-embed-manager',
-        'movie_elite_embed_manager_page_render'
-    );
+if (!function_exists('movie_elite_embed_manager_menu')) {
+    function movie_elite_embed_manager_menu() {
+        add_submenu_page(
+            'edit.php?post_type=movies',
+            'Custom Embed Server Manager',
+            '🛠️ Embed Server Manager',
+            'manage_options',
+            'movie-elite-embed-manager',
+            'movie_elite_embed_manager_page_render'
+        );
+    }
+    add_action('admin_menu', 'movie_elite_embed_manager_menu');
 }
-add_action('admin_menu', 'movie_elite_embed_manager_menu');
 
 /**
  * Render Embed Server Manager Admin GUI Page
  */
-function movie_elite_embed_manager_page_render() {
-    if (isset($_POST['save_embed_templates'])) {
-        check_admin_referer('movie_elite_save_embed_nonce');
-        $servers = isset($_POST['embed_servers']) ? (array) $_POST['embed_servers'] : array();
-        update_option('movie_elite_custom_embed_servers', $servers);
-        echo '<div class="updated notice"><p>Custom Embed Servers saved successfully!</p></div>';
-    }
+if (!function_exists('movie_elite_embed_manager_page_render')) {
+    function movie_elite_embed_manager_page_render() {
+        if (isset($_POST['save_embed_templates'])) {
+            check_admin_referer('movie_elite_save_embed_nonce');
+            $servers = isset($_POST['embed_servers']) ? (array) $_POST['embed_servers'] : array();
+            update_option('movie_elite_custom_embed_servers', $servers);
+            echo '<div class="updated notice"><p>Custom Embed Servers saved successfully!</p></div>';
+        }
 
-    $servers = get_option('movie_elite_custom_embed_servers', array(
-        array('name' => 'Server 1 (VidSrc ME)',  'url' => 'https://vidsrc.me/embed/movie/{imdb_id}'),
-        array('name' => 'Server 2 (VidSrc PRO)', 'url' => 'https://vidsrc.to/embed/movie/{imdb_id}'),
-        array('name' => 'Server 3 (SuperEmbed)', 'url' => 'https://multiembed.mov/directstream.php?video_id={imdb_id}'),
-        array('name' => 'Server 4 (AutoEmbed)',  'url' => 'https://autoembed.cc/embed/movie/{imdb_id}')
-    ));
-    ?>
-    <div class="wrap" style="max-width:1200px;">
-        <h1><span class="dashicons dashicons-admin-plugins" style="color:#00f2fe;"></span> Custom Embed Server Templates Manager</h1>
-        <p>Configure custom embed templates (Doodstream, Streamwish, Filemoon, Mixdrop, Direct MP4) used across all Movies and TV Shows!</p>
-        <hr />
+        $servers = get_option('movie_elite_custom_embed_servers', array(
+            array('name' => 'Server 1 (VidSrc ME)',  'url' => 'https://vidsrc.me/embed/movie/{imdb_id}'),
+            array('name' => 'Server 2 (VidSrc PRO)', 'url' => 'https://vidsrc.to/embed/movie/{imdb_id}'),
+            array('name' => 'Server 3 (SuperEmbed)', 'url' => 'https://multiembed.mov/directstream.php?video_id={imdb_id}'),
+            array('name' => 'Server 4 (AutoEmbed)',  'url' => 'https://autoembed.cc/embed/movie/{imdb_id}')
+        ));
+        ?>
+        <div class="wrap" style="max-width:1200px;">
+            <h1><span class="dashicons dashicons-admin-plugins" style="color:#00f2fe;"></span> Custom Embed Server Templates Manager</h1>
+            <p>Configure custom embed templates (Doodstream, Streamwish, Filemoon, Mixdrop, Direct MP4) used across all Movies and TV Shows!</p>
+            <hr />
 
-        <form method="post" action="" style="background:#fff; padding:25px; border-radius:12px; border:1px solid #cbd5e1; margin-top:20px;">
-            <?php wp_nonce_field('movie_elite_save_embed_nonce'); ?>
-            <h3 style="margin-top:0;">Configured Video Server Embed URLs:</h3>
-            
-            <div id="embed-servers-wrapper">
-                <?php foreach ($servers as $idx => $srv) : ?>
-                <div style="display:flex; gap:15px; margin-bottom:15px; align-items:center;">
-                    <input type="text" name="embed_servers[<?php echo $idx; ?>][name]" value="<?php echo esc_attr($srv['name']); ?>" placeholder="Server Name (e.g. Server 1 (Doodstream))" style="width:240px; font-weight:bold;" />
-                    <input type="text" name="embed_servers[<?php echo $idx; ?>][url]" value="<?php echo esc_attr($srv['url']); ?>" placeholder="Embed URL Template (use {imdb_id} or {tmdb_id})" style="flex:1; font-family:monospace;" />
+            <form method="post" action="" style="background:#fff; padding:25px; border-radius:12px; border:1px solid #cbd5e1; margin-top:20px;">
+                <?php wp_nonce_field('movie_elite_save_embed_nonce'); ?>
+                <h3 style="margin-top:0;">Configured Video Server Embed URLs:</h3>
+                
+                <div id="embed-servers-wrapper">
+                    <?php foreach ($servers as $idx => $srv) : ?>
+                    <div style="display:flex; gap:15px; margin-bottom:15px; align-items:center;">
+                        <input type="text" name="embed_servers[<?php echo $idx; ?>][name]" value="<?php echo esc_attr($srv['name']); ?>" placeholder="Server Name (e.g. Server 1 (Doodstream))" style="width:240px; font-weight:bold;" />
+                        <input type="text" name="embed_servers[<?php echo $idx; ?>][url]" value="<?php echo esc_attr($srv['url']); ?>" placeholder="Embed URL Template (use {imdb_id} or {tmdb_id})" style="flex:1; font-family:monospace;" />
+                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
-            </div>
 
-            <p style="color:#64748b; font-size:0.85rem;">Use placeholders: <code>{imdb_id}</code>, <code>{tmdb_id}</code>, <code>{season}</code>, <code>{episode}</code>.</p>
-            <input type="submit" name="save_embed_templates" class="button button-primary button-large" value="Save Embed Server Templates" style="background:#0284c7; border-color:#0284c7; font-weight:bold;" />
-        </form>
-    </div>
-    <?php
+                <p style="color:#64748b; font-size:0.85rem;">Use placeholders: <code>{imdb_id}</code>, <code>{tmdb_id}</code>, <code>{season}</code>, <code>{episode}</code>.</p>
+                <input type="submit" name="save_embed_templates" class="button button-primary button-large" value="Save Embed Server Templates" style="background:#0284c7; border-color:#0284c7; font-weight:bold;" />
+            </form>
+        </div>
+        <?php
+    }
 }
 
 /**
