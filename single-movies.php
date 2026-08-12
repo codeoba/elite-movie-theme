@@ -303,28 +303,44 @@ while (have_posts()) : the_post();
                 </div>
 
                 <!-- Multi-Resolution Download Link Auto-Generator -->
+                <?php
+                $dl_4k_url   = get_post_meta($post_id, 'download_url_4k', true) ?: ($vv_links['4k'] ?? "https://vidvault.ru/movie/{$clean_tmdb}?quality=2160p");
+                $dl_1080_url = get_post_meta($post_id, 'download_url_1080p', true) ?: ($vv_links['1080p'] ?? "https://vidvault.ru/movie/{$clean_tmdb}?quality=1080p");
+                $dl_720_url  = get_post_meta($post_id, 'download_url_720p', true) ?: ($vv_links['720p'] ?? "https://vidvault.ru/movie/{$clean_tmdb}?quality=720p");
+                $dl_480_url  = get_post_meta($post_id, 'download_url_480p', true) ?: ($vv_links['480p'] ?? "https://vidvault.ru/movie/{$clean_tmdb}?quality=480p");
+                ?>
                 <div style="margin-bottom:28px; background:var(--bg-card); padding:20px; border-radius:var(--radius-md); border:1px solid var(--border-color);">
                     <h3 style="color:#fff; font-size:1.1rem; margin:0 0 14px 0; display:flex; align-items:center; gap:8px;">
                         <i class="fa-solid fa-cloud-arrow-down" style="color:var(--accent-green);"></i> Direct Movie Download Links (Multi-Resolution)
                     </h3>
                     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
-                        <a href="javascript:void(0);" onclick="alert('Starting 4K Ultra HD Movie Download...');" style="background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                        <a id="dl-btn-4k" href="<?php echo esc_url($dl_4k_url); ?>" target="_blank" rel="noopener" download style="background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s;" onmouseover="this.style.background='rgba(0,255,136,0.25)'" onmouseout="this.style.background='rgba(0,255,136,0.12)'">
                             <span><i class="fa-solid fa-file-video"></i> 2160p 4K UHD</span>
                             <span style="font-size:0.7rem; background:var(--accent-green); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">3.8 GB</span>
                         </a>
-                        <a href="javascript:void(0);" onclick="alert('Starting 1080p Full HD Movie Download...');" style="background:rgba(0,212,255,0.12); color:var(--accent-cyan); border:1px solid var(--accent-cyan); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                        <a id="dl-btn-1080" href="<?php echo esc_url($dl_1080_url); ?>" target="_blank" rel="noopener" download style="background:rgba(0,212,255,0.12); color:var(--accent-cyan); border:1px solid var(--accent-cyan); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s;" onmouseover="this.style.background='rgba(0,212,255,0.25)'" onmouseout="this.style.background='rgba(0,212,255,0.12)'">
                             <span><i class="fa-solid fa-file-video"></i> 1080p Full HD</span>
                             <span style="font-size:0.7rem; background:var(--accent-cyan); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">1.8 GB</span>
                         </a>
-                        <a href="javascript:void(0);" onclick="alert('Starting 720p HD Movie Download...');" style="background:rgba(255,183,3,0.12); color:var(--accent-gold); border:1px solid var(--accent-gold); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                        <a id="dl-btn-720" href="<?php echo esc_url($dl_720_url); ?>" target="_blank" rel="noopener" download style="background:rgba(255,183,3,0.12); color:var(--accent-gold); border:1px solid var(--accent-gold); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,183,3,0.25)'" onmouseout="this.style.background='rgba(255,183,3,0.12)'">
                             <span><i class="fa-solid fa-file-video"></i> 720p Fast HD</span>
                             <span style="font-size:0.7rem; background:var(--accent-gold); color:#000; padding:2px 6px; border-radius:4px; font-weight:900;">850 MB</span>
                         </a>
-                        <a href="javascript:void(0);" onclick="alert('Starting 480p Mobile Download...');" style="background:rgba(255,45,107,0.12); color:var(--accent-magenta); border:1px solid var(--accent-magenta); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between;">
+                        <a id="dl-btn-480" href="<?php echo esc_url($dl_480_url); ?>" target="_blank" rel="noopener" download style="background:rgba(255,45,107,0.12); color:var(--accent-magenta); border:1px solid var(--accent-magenta); border-radius:8px; padding:10px 14px; text-decoration:none; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:space-between; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,45,107,0.25)'" onmouseout="this.style.background='rgba(255,45,107,0.12)'">
                             <span><i class="fa-solid fa-mobile-screen"></i> 480p Mobile</span>
                             <span style="font-size:0.7rem; background:var(--accent-magenta); color:#fff; padding:2px 6px; border-radius:4px; font-weight:900;">420 MB</span>
                         </a>
                     </div>
+                    <?php if (!empty($manual_downloads)) : ?>
+                    <div style="margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06); display:flex; flex-wrap:wrap; gap:10px;">
+                        <span style="color:#94a3b8; font-size:0.82rem; width:100%; font-weight:700;"><i class="fa-solid fa-server"></i> Scraped / Custom Mirror Download Links:</span>
+                        <?php foreach ($manual_downloads as $dl) : if (empty($dl['url'])) continue; ?>
+                        <a href="<?php echo esc_url($dl['url']); ?>" target="_blank" rel="noopener" download style="display:inline-flex; align-items:center; gap:6px; background:rgba(0,255,136,0.12); color:var(--accent-green); border:1px solid var(--accent-green); border-radius:6px; padding:7px 16px; text-decoration:none; font-size:0.85rem; font-weight:700;">
+                            <i class="fa-solid fa-download"></i> <?php echo esc_html($dl['label'] ?: 'Direct Download'); ?>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Quick Emoji Reactions -->
