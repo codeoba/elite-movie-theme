@@ -559,20 +559,38 @@ function movie_elite_ajax_import_handler() {
             wp_set_object_terms($post_id, $genre_names, 'genre');
         }
 
-        // Assign Cast to actor taxonomy
+        // Assign Cast to actor taxonomy with profile photos & character roles
         if (!empty($m['credits']['cast'])) {
-            $cast_names = array();
-            $cast_limit = 0;
+            $cast_names   = array();
+            $cast_details = array();
+            $cast_limit   = 0;
             foreach ($m['credits']['cast'] as $cast_member) {
                 if (!empty($cast_member['name'])) {
-                    $cast_names[] = sanitize_text_field($cast_member['name']);
+                    $c_name      = sanitize_text_field($cast_member['name']);
+                    $c_photo     = !empty($cast_member['profile_path']) ? 'https://image.tmdb.org/t/p/w185' . $cast_member['profile_path'] : '';
+                    $c_character = sanitize_text_field($cast_member['character'] ?? 'Main Cast');
+
+                    $cast_names[]   = $c_name;
+                    $cast_details[] = array(
+                        'name'      => $c_name,
+                        'photo'     => $c_photo,
+                        'character' => $c_character
+                    );
+
+                    // Save photo URL to actor taxonomy term meta
+                    $term = get_term_by('name', $c_name, 'actor');
+                    if ($term && !is_wp_error($term) && !empty($c_photo)) {
+                        update_term_meta($term->term_id, '_actor_photo_url', $c_photo);
+                    }
+
                     $cast_limit++;
-                    if ($cast_limit >= 10) break;
+                    if ($cast_limit >= 12) break;
                 }
             }
             if (!empty($cast_names)) {
                 wp_set_object_terms($post_id, $cast_names, 'actor', true);
                 update_post_meta($post_id, 'movie_cast', implode(', ', $cast_names));
+                update_post_meta($post_id, 'movie_cast_details', $cast_details);
             }
         }
 

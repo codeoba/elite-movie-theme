@@ -716,34 +716,104 @@ function movie_elite_render_spotlight_modal() {
 }
 
 /**
- * Render Interactive Cast Avatars Carousel
+ * Render Interactive Cast Avatars Carousel with Real Actor Photos & Character Roles
  */
 function movie_elite_render_cast_avatars($post_id) {
-    $actors = get_the_terms($post_id, 'actor');
-    $raw_cast = get_post_meta($post_id, 'movie_cast', true);
-    
-    if (empty($actors) && empty($raw_cast)) return;
+    $cast_details = get_post_meta($post_id, 'movie_cast_details', true);
+    $tmdb_id      = get_post_meta($post_id, 'tmdb_id', true);
+    $post_type    = get_post_type($post_id) === 'tvshows' ? 'tv' : 'movie';
 
+    // If movie_cast_details is missing but tmdb_id is present, auto-fetch TMDb cast profile photos
+    if (empty($cast_details) && !empty($tmdb_id)) {
+        $api_key  = '15d2ea6d0dc1d476efbca3eba2e9bbfb';
+        $tmdb_url = "https://api.themoviedb.org/3/{$post_type}/{$tmdb_id}/credits?api_key={$api_key}";
+        $resp     = wp_remote_get($tmdb_url, array('timeout' => 5));
+        
+        if (!is_wp_error($resp) && wp_remote_retrieve_response_code($resp) === 200) {
+            $body = json_decode(wp_remote_retrieve_body($resp), true);
+            if (!empty($body['cast'])) {
+                $cast_details = array();
+                $count = 0;
+                foreach ($body['cast'] as $c) {
+                    if (!empty($c['name'])) {
+                        $c_name  = sanitize_text_field($c['name']);
+                        $c_photo = !empty($c['profile_path']) ? 'https://image.tmdb.org/t/p/w185' . $c['profile_path'] : '';
+                        $c_char  = sanitize_text_field($c['character'] ?? 'Main Cast');
+                        
+                        $cast_details[] = array(
+                            'name'      => $c_name,
+                            'photo'     => $c_photo,
+                            'character' => $c_char
+                        );
+                        
+                        $term = get_term_by('name', $c_name, 'actor');
+                        if ($term && !is_wp_error($term) && !empty($c_photo)) {
+                            update_term_meta($term->term_id, '_actor_photo_url', $c_photo);
+                        }
+
+                        $count++;
+                        if ($count >= 12) break;
+                    }
+                }
+                if (!empty($cast_details)) {
+                    update_post_meta($post_id, 'movie_cast_details', $cast_details);
+                }
+            }
+        }
+    }
+
+    $actors   = get_the_terms($post_id, 'actor');
+    $raw_cast = get_post_meta($post_id, 'movie_cast', true);
     $cast_list = array();
-    if (!empty($actors) && !is_wp_error($actors)) {
-        foreach ($actors as $act) {
+
+    if (!empty($cast_details) && is_array($cast_details)) {
+        foreach ($cast_details as $cd) {
+            $c_name  = $cd['name'] ?? '';
+            $c_photo = $cd['photo'] ?? '';
+            $c_role  = $cd['character'] ?? 'Main Cast';
+
+            if (empty($c_name)) continue;
+
+            $term = get_term_by('name', $c_name, 'actor');
+            if (empty($c_photo) && $term && !is_wp_error($term)) {
+                $c_photo = get_term_meta($term->term_id, '_actor_photo_url', true);
+            }
+
             $cast_list[] = array(
-                'name' => $act->name,
-                'link' => get_term_link($act),
-                'role' => 'Main Cast'
+                'name'  => $c_name,
+                'photo' => $c_photo,
+                'role'  => $c_role,
+                'link'  => ($term && !is_wp_error($term)) ? get_term_link($term) : home_url('/?s=' . urlencode($c_name))
             );
         }
-    } elseif (!empty($raw_cast)) {
-        $names = explode(',', $raw_cast);
-        foreach ($names as $c) {
-            $c_name = trim($c);
-            if (!empty($c_name)) {
-                $term = get_term_by('name', $c_name, 'actor');
+    }
+
+    // Fallback if cast_details is still empty
+    if (empty($cast_list)) {
+        if (!empty($actors) && !is_wp_error($actors)) {
+            foreach ($actors as $act) {
+                $c_photo = get_term_meta($act->term_id, '_actor_photo_url', true);
                 $cast_list[] = array(
-                    'name' => $c_name,
-                    'link' => $term ? get_term_link($term) : home_url('/?s=' . urlencode($c_name)),
-                    'role' => 'Cast Member'
+                    'name'  => $act->name,
+                    'photo' => $c_photo,
+                    'role'  => 'Main Cast',
+                    'link'  => get_term_link($act)
                 );
+            }
+        } elseif (!empty($raw_cast)) {
+            $names = explode(',', $raw_cast);
+            foreach ($names as $c) {
+                $c_name = trim($c);
+                if (!empty($c_name)) {
+                    $term    = get_term_by('name', $c_name, 'actor');
+                    $c_photo = ($term && !is_wp_error($term)) ? get_term_meta($term->term_id, '_actor_photo_url', true) : '';
+                    $cast_list[] = array(
+                        'name'  => $c_name,
+                        'photo' => $c_photo,
+                        'role'  => 'Cast Member',
+                        'link'  => ($term && !is_wp_error($term)) ? get_term_link($term) : home_url('/?s=' . urlencode($c_name))
+                    );
+                }
             }
         }
     }
@@ -756,14 +826,24 @@ function movie_elite_render_cast_avatars($post_id) {
         </h4>
         <div style="display:flex; gap:16px; overflow-x:auto; padding-bottom:10px; scrollbar-width:thin;">
             <?php foreach ($cast_list as $c) :
-                $initials = mb_substr($c['name'], 0, 1);
+                $initials  = mb_substr($c['name'], 0, 1);
+                $has_photo = !empty($c['photo']);
             ?>
             <a href="<?php echo esc_url($c['link']); ?>" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; width:100px; flex-shrink:0; text-align:center;">
-                <div style="width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color:#000; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.6rem; margin-bottom:8px; box-shadow:0 6px 15px rgba(0,0,0,0.3); border:2px solid var(--accent-cyan);">
-                    <?php echo esc_html($initials); ?>
+                <div style="width:70px; height:70px; border-radius:50%; overflow:hidden; position:relative; margin-bottom:8px; box-shadow:0 6px 15px rgba(0,0,0,0.3); border:2px solid var(--accent-cyan); background:#1e293b;">
+                    <?php if ($has_photo) : ?>
+                    <img src="<?php echo esc_url($c['photo']); ?>" alt="<?php echo esc_attr($c['name']); ?>" loading="lazy" onerror="if(this.src.indexOf('wsrv.nl')===-1 &amp;&amp; this.src.indexOf('image.tmdb.org')!==-1){ this.src='https://wsrv.nl/?url='+encodeURIComponent(this.src); } else { this.style.display='none'; this.nextElementSibling.style.display='flex'; }" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                    <div style="display:none; width:100%; height:100%; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color:#000; align-items:center; justify-content:center; font-weight:900; font-size:1.6rem;">
+                        <?php echo esc_html($initials); ?>
+                    </div>
+                    <?php else : ?>
+                    <div style="display:flex; width:100%; height:100%; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); color:#000; align-items:center; justify-content:center; font-weight:900; font-size:1.6rem;">
+                        <?php echo esc_html($initials); ?>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <span style="color:#fff; font-weight:700; font-size:0.82rem; line-height:1.2; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?php echo esc_html($c['name']); ?></span>
-                <span style="color:var(--text-muted); font-size:0.72rem; margin-top:2px;"><?php echo esc_html($c['role']); ?></span>
+                <span style="color:var(--text-muted); font-size:0.72rem; margin-top:2px; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?php echo esc_html($c['role']); ?></span>
             </a>
             <?php endforeach; ?>
         </div>
