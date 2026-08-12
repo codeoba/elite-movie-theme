@@ -223,11 +223,6 @@ while (have_posts()) : the_post();
             <!-- Embed Player Frame (Clean Unrestricted Player Iframe) -->
             <div class="iframe-player-wrapper" style="position:relative;">
                 <iframe id="main-movie-iframe" src="<?php echo esc_url($embeds[0]['url'] ?? "https://vidsrc.me/embed/tv/{$clean_imdb}/1/1"); ?>" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerpolicy="origin-when-cross-origin" allowfullscreen></iframe>
-                
-                <!-- Skip Intro Button Overlay -->
-                <button type="button" id="btn-skip-intro" style="position:absolute; bottom:20px; right:20px; z-index:10; background:rgba(0,0,0,0.85); color:var(--accent-cyan); border:1px solid var(--accent-cyan); padding:8px 16px; border-radius:8px; font-weight:800; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; gap:6px; backdrop-filter:blur(6px);">
-                    <i class="fa-solid fa-forward-fast"></i> Skip Intro (85s)
-                </button>
             </div>
 
             <!-- Advanced Player Controls Sub-Bar -->
